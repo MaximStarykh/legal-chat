@@ -45,6 +45,11 @@ const withErrorHandling = (handler: (req: VercelRequest, res: VercelResponse) =>
     console.log(`[${new Date().toISOString()}] Incoming ${req.method} request to ${req.url}`);
     
     try {
+      // Check for API key in production
+      if (process.env.VERCEL_ENV === 'production' && !process.env.GEMINI_API_KEY) {
+        throw new Error('GEMINI_API_KEY is not set in Vercel environment variables');
+      }
+      
       await handler(req, res);
     } catch (error) {
       console.error('Unhandled error in API route:', error);
@@ -59,14 +64,17 @@ const withErrorHandling = (handler: (req: VercelRequest, res: VercelResponse) =>
       }
       
       // Send a more detailed error response
-      res.status(500).json({
+      const errorResponse: any = {
         error: 'Internal Server Error',
         message: error instanceof Error ? error.message : 'An unknown error occurred',
-        ...(process.env.NODE_ENV === 'development' && {
-          stack: error instanceof Error ? error.stack : undefined,
-          details: error
-        })
-      });
+      };
+      
+      // Add more details in development or if it's an API key error
+      if (process.env.NODE_ENV === 'development' || error instanceof Error && error.message.includes('API key')) {
+        errorResponse.details = error instanceof Error ? error.stack : String(error);
+      }
+      
+      res.status(500).json(errorResponse);
     }
   };
 };
