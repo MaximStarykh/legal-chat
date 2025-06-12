@@ -2,7 +2,6 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import {
   ChatMessage,
   Sender,
-  GroundingSource,
   ErrorState,
   ApiStatus,
 } from "../types";
@@ -19,54 +18,52 @@ export const useChat = (initialMessages: ChatMessage[] = []) => {
   const [error, setError] = useState<ErrorState | null>(null);
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const chatSessionRef = useRef<Chat | null>(null);
+  const isMountedRef = useRef(true);
   const isLoading = apiStatus === ApiStatus.LOADING;
 
-  // Initialize chat session
-  useEffect(() => {
-    let isMounted = true;
+  const initChat = useCallback(async () => {
+    const isMounted = isMountedRef.current;
+    try {
+      if (isMounted) setApiStatus(ApiStatus.LOADING);
+      
+      const session = await initializeChatSession();
+      chatSessionRef.current = session;
 
-    const initChat = async () => {
-      try {
-        if (isMounted) setApiStatus(ApiStatus.LOADING);
-        const session = initializeChatSession();
-        chatSessionRef.current = session;
-
-        if (isMounted && initialMessages.length === 0) {
-          const welcomeMessage: ChatMessage = {
-            id: crypto.randomUUID(),
-            sender: Sender.AI,
-            text: "Вітаю! Я ваш AI-асистент. Як я можу вам допомогти сьогодні?",
-            timestamp: new Date(),
-          };
-          setMessages([welcomeMessage]);
-        } else if (isMounted) {
-          setMessages(initialMessages);
-        }
-
-        if (isMounted) setApiStatus(ApiStatus.SUCCESS);
-      } catch (error) {
-        console.error("Initialization error:", error);
-        if (isMounted) {
-          const errorMessage =
-            error instanceof Error
-              ? error.message
-              : "Помилка ініціалізації чату";
-          setError({
-            message: errorMessage,
-            code: GeminiErrorCode.UNKNOWN_ERROR,
-            isRecoverable: true,
-          });
-          setApiStatus(ApiStatus.ERROR);
-        }
+      if (isMounted && initialMessages.length === 0) {
+        const welcomeMessage: ChatMessage = {
+          id: crypto.randomUUID(),
+          sender: Sender.AI,
+          text: "Вітаю! Я ваш AI-асистент. Як я можу вам допомогти сьогодні?",
+          timestamp: new Date(),
+        };
+        setMessages([welcomeMessage]);
+      } else if (isMounted) {
+        setMessages(initialMessages);
       }
-    };
 
-    initChat();
-
-    return () => {
-      isMounted = false;
-    };
+      if (isMounted) setApiStatus(ApiStatus.SUCCESS);
+    } catch (error) {
+      console.error("Initialization error:", error);
+      if (isMounted) {
+        const errorMessage = error instanceof Error 
+          ? error.message 
+          : "Помилка ініціалізації чату";
+        setError({
+          message: errorMessage,
+          code: GeminiErrorCode.UNKNOWN_ERROR,
+          isRecoverable: true,
+        });
+        setApiStatus(ApiStatus.ERROR);
+      }
+    }
   }, [initialMessages]);
+
+  useEffect(() => {
+    initChat();
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, [initChat]);
 
   const sendMessage = useCallback(
     async (content: string) => {
@@ -107,8 +104,8 @@ export const useChat = (initialMessages: ChatMessage[] = []) => {
           id: crypto.randomUUID(),
           sender: Sender.AI,
           text: aiText,
-          sources: aiSources as GroundingSource[],
           timestamp: new Date(),
+          sources: aiSources,
         };
 
         setMessages((prev) => [...prev, aiMessage]);
@@ -150,7 +147,7 @@ export const useChat = (initialMessages: ChatMessage[] = []) => {
         setIsTyping(false);
       }
     },
-    [isLoading],
+    [isLoading]
   );
 
   const retryLastMessage = useCallback(async () => {
@@ -163,6 +160,10 @@ export const useChat = (initialMessages: ChatMessage[] = []) => {
     return false;
   }, [messages, sendMessage]);
 
+  const reinitializeChat = useCallback(async () => {
+    await initChat();
+  }, [initChat]);
+
   return {
     messages,
     sendMessage,
@@ -170,6 +171,7 @@ export const useChat = (initialMessages: ChatMessage[] = []) => {
     error,
     isLoading,
     retryLastMessage,
+    reinitializeChat,
     clearError: () => setError(null),
   };
 };

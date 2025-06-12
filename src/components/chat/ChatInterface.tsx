@@ -9,6 +9,8 @@ import {
   WELCOME_SUBTITLE,
   AI_DISCLAIMER,
   INPUT_PLACEHOLDER,
+  API_KEY_MISSING_MESSAGE,
+  API_KEY_REQUIRED,
 } from "../../constants";
 
 interface ChatInterfaceProps {
@@ -29,6 +31,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     error,
     isLoading,
     retryLastMessage,
+    reinitializeChat,
     clearError,
   } = useChat(initialMessages);
 
@@ -49,12 +52,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     if (error?.isRecoverable) {
       clearError();
       if (error.code === "CHAT_SESSION_ERROR") {
-        window.location.reload();
+        reinitializeChat();
       } else {
         retryLastMessage();
       }
     }
-  }, [error, clearError, retryLastMessage]);
+  }, [error, clearError, retryLastMessage, reinitializeChat]);
 
   return (
     <div className={`flex flex-col h-full ${className}`}>
