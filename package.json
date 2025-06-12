@@ -11,13 +11,13 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@tailwindcss/vite": "^4.1.10",
+    "axios": "^1.7.2",
     "focus-trap-react": "^11.0.4",
     "lucide-react": "^0.514.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-markdown": "^10.1.0",
-    "remark-gfm": "^4.0.1",
-    "axios": "^1.7.2"
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@types/node": "^22.15.31",

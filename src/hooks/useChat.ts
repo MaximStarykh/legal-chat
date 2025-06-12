@@ -1,12 +1,11 @@
 import { useState, useCallback } from "react";
 import { sendMessage } from "../services/geminiService";
-import type { Message, GroundingSource } from "../types";
+import type { Message } from "../types";
 
 export const useChat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sources, setSources] = useState<GroundingSource[]>([]);
 
   const handleSendMessage = useCallback(async (userMessage: string) => {
     if (!userMessage.trim()) return;
@@ -14,29 +13,31 @@ export const useChat = () => {
     setLoading(true);
     setError(null);
 
-    const newMessages: Message[] = [
-      ...messages,
-      { role: "user", parts: [{ text: userMessage }] },
-    ];
-    setMessages(newMessages);
+    // Optimistically add the user's message to the UI
+    const userTurn: Message = { role: "user", parts: [{ text: userMessage }] };
+    setMessages(prev => [...prev, userTurn]);
 
     try {
-      const { text, sources: newSources } = await sendMessage(
-        newMessages,
+      // Pass the PREVIOUS messages array and the new message text to the service
+      const { text, sources } = await sendMessage(
+        messages, // This is the state BEFORE the current user message was added
         userMessage
       );
 
-      const botMessage: Message = { role: "model", parts: [{ text }] };
+      // Add the bot's response to the UI
+      const botMessage: Message = { role: "model", parts: [{ text }], sources };
       setMessages((prev) => [...prev, botMessage]);
-      setSources(newSources);
+
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An unknown error occurred.";
       setError(errorMessage);
-      setMessages(messages);
+      // On error, revert the optimistic UI update by removing the last message
+      setMessages(prev => prev.slice(0, -1));
     } finally {
       setLoading(false);
     }
   }, [messages]);
 
-  return { messages, loading, error, sources, handleSendMessage };
+  // The `sources` state is no longer needed as it's part of each message
+  return { messages, loading, error, handleSendMessage };
 };

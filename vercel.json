@@ -1,3 +1,4 @@
 {
-  "name": "legal-chat-maxim-starykh"
+  "name": "legal-chat-maxim-starykh",
+  "devCommand": "vite"
 }
