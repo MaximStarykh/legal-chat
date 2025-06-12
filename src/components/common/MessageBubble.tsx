@@ -149,6 +149,27 @@ export const MessageBubble: React.FC<{ message: Message }> = ({ message }) => {
                   {message.parts.map((part) => part.text).join("")}
                 </ReactMarkdown>
               </div>
+
+              {!isUser && message.sources && message.sources.length > 0 && (
+                <div className="mt-4 pt-3 border-t border-gray-200">
+                  <h4 className="text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">Sources</h4>
+                  <ol className="list-decimal list-inside space-y-1">
+                    {message.sources.map((source, index) => (
+                      <li key={index} className="text-sm truncate">
+                        <a
+                          href={source.uri}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 hover:underline"
+                          title={source.title}
+                        >
+                          {source.title}
+                        </a>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
               
               
             </div>

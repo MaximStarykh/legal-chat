@@ -10,6 +10,7 @@ interface Part {
 export interface Message {
   role: "user" | "model";
   parts: Part[];
+  sources?: GroundingSource[];
 }
 
 export interface Chat {
