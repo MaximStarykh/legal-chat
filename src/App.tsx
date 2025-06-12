@@ -46,7 +46,7 @@ const App: FC = () => {
 
   // Set API key from environment variables (in a real app, this should be handled securely on the backend)
   useEffect(() => {
-    if (!process.env.REACT_APP_GEMINI_API_KEY) {
+    if (!import.meta.env.VITE_GEMINI_API_KEY) {
       console.warn(API_KEY_MISSING_MESSAGE);
     }
   }, []);
