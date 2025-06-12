@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useChat } from '../../hooks/useChat';
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
@@ -38,13 +38,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     clearError
   } = useChat(initialMessages);
 
+  const [input, setInput] = useState('');
+
   const handleSubmit = useCallback(async (e?: React.FormEvent) => {
     e?.preventDefault();
-    const input = (e?.target as any)?.message?.value || '';
     if (input.trim()) {
       await sendMessage(input);
+      setInput('');
     }
-  }, [sendMessage]);
+  }, [input, sendMessage]);
 
   const handleRetry = useCallback(() => {
     if (error?.isRecoverable) {
@@ -92,15 +94,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         )}
         
         <MessageInput
-          value={isLoading ? '' : ''}
+          value={input}
           isLoading={isLoading}
           isApiKeyMissing={isApiKeyMissing}
           placeholder={
-            isApiKeyMissing 
-              ? `${API_KEY_MISSING_MESSAGE} ${API_KEY_REQUIRED}` 
+            isApiKeyMissing
+              ? `${API_KEY_MISSING_MESSAGE} ${API_KEY_REQUIRED}`
               : INPUT_PLACEHOLDER
           }
-          onChange={() => {}}
+          onChange={setInput}
           onSubmit={handleSubmit}
         />
       </div>

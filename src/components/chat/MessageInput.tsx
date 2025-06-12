@@ -63,6 +63,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           <textarea
             id="chat-input"
             ref={textareaRef}
+            name="message"
             rows={1}
             className="block w-full border-0 bg-transparent resize-none py-3 px-4 placeholder-gray-500 focus:ring-0 focus:outline-none sm:text-sm"
             placeholder={placeholder}
