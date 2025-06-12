@@ -52,6 +52,8 @@ const App: FC = () => {
       console.warn(API_KEY_MISSING_MESSAGE);
     }
   }, []);
+=======
+>>>>>>> remotes/origin/codex/create-serverless-endpoint-for-gemini-api
 
   useEffect(() => {
     const handleResize = (): void => {
@@ -173,10 +175,14 @@ const App: FC = () => {
         <main className="flex-1 flex flex-col overflow-hidden bg-white">
           <div className="flex-1 overflow-y-auto focus:outline-none">
             <div className="max-w-4xl mx-auto w-full h-full flex flex-col">
+<<<<<<< HEAD
               <ChatInterface
                 onApiKeyMissing={handleApiKeyMissing}
                 className="h-full"
               />
+=======
+              <ChatInterface className="h-full" />
+>>>>>>> remotes/origin/codex/create-serverless-endpoint-for-gemini-api
             </div>
           </div>
 
