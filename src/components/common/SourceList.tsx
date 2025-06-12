@@ -1,5 +1,6 @@
 import React from 'react';
 import { GroundingSource } from '../../types/index';
+import { SOURCES_TITLE } from '../../constants';
 
 interface SourceListProps {
   sources: GroundingSource[];
@@ -12,7 +13,7 @@ export const SourceList: React.FC<SourceListProps> = ({ sources }: SourceListPro
 
   return (
     <div className="space-y-2">
-      <p className="text-xs font-medium text-gray-500">Sources:</p>
+      <p className="text-xs font-medium text-gray-500">{SOURCES_TITLE}</p>
       <div className="flex flex-wrap gap-2">
         {sources.map((source, index) => (
           <a
