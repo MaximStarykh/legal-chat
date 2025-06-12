@@ -1,5 +1,15 @@
-import React from 'react';
-import { Menu, X, Send, Loader2, User, Bot, AlertCircle, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import React from "react";
+import {
+  Menu,
+  X,
+  Send,
+  Loader2,
+  User,
+  Bot,
+  AlertCircle,
+  AlertTriangle,
+  CheckCircle2,
+} from "lucide-react";
 
 type IconProps = {
   className?: string;
@@ -12,22 +22,30 @@ const IconWrapper: React.FC<{
   className?: string;
   size?: number;
   strokeWidth?: number;
-}> = ({ icon, className = '', size = 20, strokeWidth = 2 }) => {
+}> = ({ icon, className = "", size = 20, strokeWidth = 2 }) => {
   return (
-    <span 
+    <span
       className={`inline-flex items-center justify-center ${className}`}
-      style={{
-        width: `${size}px`,
-        height: `${size}px`,
-        '--icon-stroke-width': strokeWidth,
-      } as React.CSSProperties}
+      style={
+        {
+          width: `${size}px`,
+          height: `${size}px`,
+          "--icon-stroke-width": strokeWidth,
+        } as React.CSSProperties
+      }
+      aria-hidden="true"
+      focusable="false"
     >
       {icon}
     </span>
   );
 };
 
-export const AIIcon: React.FC<IconProps> = ({ className = '', size = 20, strokeWidth = 2 }) => (
+export const AIIcon: React.FC<IconProps> = ({
+  className = "",
+  size = 20,
+  strokeWidth = 2,
+}) => (
   <IconWrapper
     icon={<Bot size={size} strokeWidth={strokeWidth} />}
     className={`text-green-600 ${className}`}
@@ -36,7 +54,11 @@ export const AIIcon: React.FC<IconProps> = ({ className = '', size = 20, strokeW
   />
 );
 
-export const SendIcon: React.FC<IconProps> = ({ className = '', size = 20, strokeWidth = 2 }) => (
+export const SendIcon: React.FC<IconProps> = ({
+  className = "",
+  size = 20,
+  strokeWidth = 2,
+}) => (
   <IconWrapper
     icon={<Send size={size} strokeWidth={strokeWidth} />}
     className={`text-white ${className}`}
@@ -45,14 +67,14 @@ export const SendIcon: React.FC<IconProps> = ({ className = '', size = 20, strok
   />
 );
 
-export const LoadingSpinner: React.FC<IconProps> = ({ className = '', size = 20, strokeWidth = 2 }) => (
+export const LoadingSpinner: React.FC<IconProps> = ({
+  className = "",
+  size = 20,
+  strokeWidth = 2,
+}) => (
   <IconWrapper
     icon={
-      <Loader2 
-        className="animate-spin" 
-        size={size} 
-        strokeWidth={strokeWidth} 
-      />
+      <Loader2 className="animate-spin" size={size} strokeWidth={strokeWidth} />
     }
     className={`text-blue-600 ${className}`}
     size={size}
@@ -60,7 +82,11 @@ export const LoadingSpinner: React.FC<IconProps> = ({ className = '', size = 20,
   />
 );
 
-export const UserIcon: React.FC<IconProps> = ({ className = '', size = 20, strokeWidth = 2 }) => (
+export const UserIcon: React.FC<IconProps> = ({
+  className = "",
+  size = 20,
+  strokeWidth = 2,
+}) => (
   <IconWrapper
     icon={<User size={size} strokeWidth={strokeWidth} />}
     className={`text-blue-600 ${className}`}
@@ -69,7 +95,11 @@ export const UserIcon: React.FC<IconProps> = ({ className = '', size = 20, strok
   />
 );
 
-export const MenuIcon: React.FC<IconProps> = ({ className = '', size = 24, strokeWidth = 2 }) => (
+export const MenuIcon: React.FC<IconProps> = ({
+  className = "",
+  size = 24,
+  strokeWidth = 2,
+}) => (
   <IconWrapper
     icon={<Menu size={size} strokeWidth={strokeWidth} />}
     className={`text-gray-600 ${className}`}
@@ -78,7 +108,11 @@ export const MenuIcon: React.FC<IconProps> = ({ className = '', size = 24, strok
   />
 );
 
-export const CloseIcon: React.FC<IconProps> = ({ className = '', size = 24, strokeWidth = 2 }) => (
+export const CloseIcon: React.FC<IconProps> = ({
+  className = "",
+  size = 24,
+  strokeWidth = 2,
+}) => (
   <IconWrapper
     icon={<X size={size} strokeWidth={strokeWidth} />}
     className={`text-gray-600 ${className}`}
@@ -87,7 +121,11 @@ export const CloseIcon: React.FC<IconProps> = ({ className = '', size = 24, stro
   />
 );
 
-export const ErrorIcon: React.FC<IconProps> = ({ className = '', size = 20, strokeWidth = 2 }) => (
+export const ErrorIcon: React.FC<IconProps> = ({
+  className = "",
+  size = 20,
+  strokeWidth = 2,
+}) => (
   <IconWrapper
     icon={<AlertCircle size={size} strokeWidth={strokeWidth} />}
     className={`text-red-500 ${className}`}
@@ -96,7 +134,11 @@ export const ErrorIcon: React.FC<IconProps> = ({ className = '', size = 20, stro
   />
 );
 
-export const WarningIcon: React.FC<IconProps> = ({ className = '', size = 20, strokeWidth = 2 }) => (
+export const WarningIcon: React.FC<IconProps> = ({
+  className = "",
+  size = 20,
+  strokeWidth = 2,
+}) => (
   <IconWrapper
     icon={<AlertTriangle size={size} strokeWidth={strokeWidth} />}
     className={`text-yellow-500 ${className}`}
@@ -105,7 +147,11 @@ export const WarningIcon: React.FC<IconProps> = ({ className = '', size = 20, st
   />
 );
 
-export const SuccessIcon: React.FC<IconProps> = ({ className = '', size = 20, strokeWidth = 2 }) => (
+export const SuccessIcon: React.FC<IconProps> = ({
+  className = "",
+  size = 20,
+  strokeWidth = 2,
+}) => (
   <IconWrapper
     icon={<CheckCircle2 size={size} strokeWidth={strokeWidth} />}
     className={`text-green-500 ${className}`}
