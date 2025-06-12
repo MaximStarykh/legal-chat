@@ -12,7 +12,12 @@ export const sendMessage = async (
   const processedHistory = history.map(({ role, parts }) => ({ role, parts }));
 
   try {
-    const response = await fetch("/api/chat", {
+    // In production, the API is at the same origin, but in development we need to use the full URL
+    const apiUrl = import.meta.env.DEV 
+      ? 'http://localhost:3000/api/chat' 
+      : '/api/chat';
+      
+    const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
