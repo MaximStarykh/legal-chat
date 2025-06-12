@@ -1,6 +1,11 @@
-import { useState, useEffect, useCallback, FC, ReactNode } from 'react';
-import { MenuIcon, CloseIcon } from './components/common/Icons';
-import { DISCLAIMER_TEXT, API_KEY_MISSING_MESSAGE, API_KEY_REQUIRED } from './constants';
+import { useState, useEffect, useCallback, FC, ReactNode } from "react";
+import { MenuIcon, CloseIcon } from "./components/common/Icons";
+import { Notification } from "@/components/common/Notification";
+import {
+  DISCLAIMER_TEXT,
+  API_KEY_MISSING_MESSAGE,
+  API_KEY_REQUIRED,
+} from "./constants";
 
 declare global {
   namespace JSX {
@@ -21,9 +26,7 @@ interface ChatInterfaceProps {
 }
 
 const ChatInterface: FC<ChatInterfaceProps> = ({ className, children }) => (
-  <div className={className}>
-    {children}
-  </div>
+  <div className={className}>{children}</div>
 );
 
 const App: FC = () => {
@@ -31,17 +34,16 @@ const App: FC = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [chats] = useState<Chat[]>([
-    { id: '1', title: 'Новий чат', unread: false },
-    { id: '2', title: 'Юридична консультація', unread: true },
-    { id: '3', title: 'Аналіз договору', unread: false },
+    { id: "1", title: "Новий чат", unread: false },
+    { id: "2", title: "Юридична консультація", unread: true },
+    { id: "3", title: "Аналіз договору", unread: false },
   ]);
-  
+  const [notification, setNotification] = useState<string | null>(null);
 
   // Handle missing API key
   const handleApiKeyMissing = useCallback((): void => {
-    // Show a more prominent error message in the UI
-    alert(`${API_KEY_MISSING_MESSAGE} ${API_KEY_REQUIRED}`);
-    console.error('API key is missing. Please provide a valid API key.');
+    setNotification(`${API_KEY_MISSING_MESSAGE} ${API_KEY_REQUIRED}`);
+    console.error("API key is missing. Please provide a valid API key.");
   }, []);
 
   // Set API key from environment variables (in a real app, this should be handled securely on the backend)
@@ -55,10 +57,10 @@ const App: FC = () => {
     const handleResize = (): void => {
       setIsMobile(window.innerWidth < 768);
     };
-    
+
     handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const toggleSidebar = useCallback((): void => {
@@ -73,6 +75,14 @@ const App: FC = () => {
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
+      {notification && (
+        <div className="fixed top-4 right-4 z-50">
+          <Notification
+            message={notification}
+            onClose={() => setNotification(null)}
+          />
+        </div>
+      )}
       {/* Header */}
       <header className="sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm">
         <div className="px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -106,15 +116,15 @@ const App: FC = () => {
         {/* Sidebar */}
         <div
           className={`fixed inset-0 z-20 bg-gray-900 bg-opacity-50 transition-opacity duration-300 ease-in-out ${
-            isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+            isSidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"
           } md:hidden`}
           onClick={closeSidebar}
           aria-hidden="true"
         />
-        
+
         <aside
           className={`fixed inset-y-0 left-0 z-30 w-64 transform bg-white border-r border-gray-200 transition-transform duration-300 ease-in-out ${
-            isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+            isSidebarOpen ? "translate-x-0" : "-translate-x-full"
           } md:relative md:translate-x-0 md:flex md:flex-shrink-0 md:flex-col`}
         >
           <div className="flex h-16 flex-shrink-0 items-center border-b border-gray-200 px-4">
@@ -128,7 +138,7 @@ const App: FC = () => {
               <CloseIcon size={24} />
             </button>
           </div>
-          
+
           <nav className="flex-1 overflow-y-auto py-4 px-3">
             <div className="space-y-1">
               {chats.map((chat) => (
@@ -137,8 +147,8 @@ const App: FC = () => {
                   type="button"
                   className={`w-full text-left px-4 py-2 rounded-md text-sm font-medium transition-colors duration-150 ${
                     activeChat === chat.id
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? "bg-blue-50 text-blue-700"
+                      : "text-gray-700 hover:bg-gray-100"
                   }`}
                   onClick={() => {
                     setActiveChat(chat.id);
@@ -163,13 +173,13 @@ const App: FC = () => {
         <main className="flex-1 flex flex-col overflow-hidden bg-white">
           <div className="flex-1 overflow-y-auto focus:outline-none">
             <div className="max-w-4xl mx-auto w-full h-full flex flex-col">
-              <ChatInterface 
+              <ChatInterface
                 onApiKeyMissing={handleApiKeyMissing}
                 className="h-full"
               />
             </div>
           </div>
-          
+
           <footer className="bg-white border-t border-gray-200 py-3 px-4">
             <p className="text-xs text-center text-gray-500">
               {DISCLAIMER_TEXT}
