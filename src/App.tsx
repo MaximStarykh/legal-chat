@@ -1,10 +1,9 @@
-import { useState, useEffect, useCallback, FC, ReactNode } from "react";
+import { useState, useEffect, useCallback, FC } from "react";
 import { MenuIcon, CloseIcon } from "./components/common/Icons";
 import { Notification } from "@/components/common/Notification";
+import { ChatInterface } from "@/components/chat/ChatInterface";
 import {
   DISCLAIMER_TEXT,
-  API_KEY_MISSING_MESSAGE,
-  API_KEY_REQUIRED,
 } from "./constants";
 
 declare global {
@@ -19,16 +18,6 @@ type Chat = {
   unread: boolean;
 };
 
-interface ChatInterfaceProps {
-  onApiKeyMissing: () => void;
-  className?: string;
-  children?: ReactNode;
-}
-
-const ChatInterface: FC<ChatInterfaceProps> = ({ className, children }) => (
-  <div className={className}>{children}</div>
-);
-
 const App: FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -39,21 +28,6 @@ const App: FC = () => {
     { id: "3", title: "Аналіз договору", unread: false },
   ]);
   const [notification, setNotification] = useState<string | null>(null);
-
-  // Handle missing API key
-  const handleApiKeyMissing = useCallback((): void => {
-    setNotification(`${API_KEY_MISSING_MESSAGE} ${API_KEY_REQUIRED}`);
-    console.error("API key is missing. Please provide a valid API key.");
-  }, []);
-
-  // Set API key from environment variables (in a real app, this should be handled securely on the backend)
-  useEffect(() => {
-    if (!import.meta.env.VITE_GEMINI_API_KEY) {
-      console.warn(API_KEY_MISSING_MESSAGE);
-    }
-  }, []);
-=======
->>>>>>> remotes/origin/codex/create-serverless-endpoint-for-gemini-api
 
   useEffect(() => {
     const handleResize = (): void => {
@@ -175,14 +149,7 @@ const App: FC = () => {
         <main className="flex-1 flex flex-col overflow-hidden bg-white">
           <div className="flex-1 overflow-y-auto focus:outline-none">
             <div className="max-w-4xl mx-auto w-full h-full flex flex-col">
-<<<<<<< HEAD
-              <ChatInterface
-                onApiKeyMissing={handleApiKeyMissing}
-                className="h-full"
-              />
-=======
               <ChatInterface className="h-full" />
->>>>>>> remotes/origin/codex/create-serverless-endpoint-for-gemini-api
             </div>
           </div>
 

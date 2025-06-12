@@ -10,8 +10,7 @@ import {
   WELCOME_SUBTITLE,
   AI_DISCLAIMER,
   INPUT_PLACEHOLDER,
-  API_KEY_MISSING_MESSAGE,
-  API_KEY_REQUIRED,
+
 } from "../../constants";
 
 interface ChatInterfaceProps {

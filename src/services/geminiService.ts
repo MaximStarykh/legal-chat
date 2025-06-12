@@ -1,15 +1,21 @@
-import { API_ERROR_MESSAGE, CHAT_SESSION_ERROR } from "../constants";
+import {
+  GoogleGenerativeAI,
+  HarmCategory,
+  HarmBlockThreshold,
+  ChatSession,
+} from "@google/generative-ai";
+
+import {
+  GEMINI_MODEL_NAME,
+  API_ERROR_MESSAGE,
+  CHAT_SESSION_ERROR,
+} from "../constants";
 import type { GroundingSource } from "../types";
 
-export interface Chat {
-  history: any[];
-}
+// Re-exporting these types and enums for use in other parts of the application
+export type { ChatSession };
+export { HarmCategory, HarmBlockThreshold };
 
-/**
- * Service for handling all Gemini API interactions
- */
-
-// Error codes for specific error handling
 export enum GeminiErrorCode {
   INVALID_API_KEY = "INVALID_API_KEY",
   RATE_LIMIT_EXCEEDED = "RATE_LIMIT_EXCEEDED",
@@ -18,59 +24,135 @@ export enum GeminiErrorCode {
   UNKNOWN_ERROR = "UNKNOWN_ERROR",
 }
 
-/**
- * Creates a new chat session with Gemini API
- * @returns A new chat session or null if initialization fails
- * @throws {Error} If there's an error during initialization
- */
-export const initializeChatSession = (): Chat => ({ history: [] });
+// Singleton instance of the Gemini AI client
+let ai: GoogleGenerativeAI | null = null;
 
-/**
- * Sends a message to the Gemini chat API
- * @param chat - The chat session to use
- * @param userQuery - The user's message
- * @returns The AI's response text and any sources
- * @throws {Error} If there's an error during the API call
- */
-export const sendMessageToChat = async (
-  chat: Chat,
-  userQuery: string,
-): Promise<{ text: string; sources: GroundingSource[] }> => {
-  if (!chat) {
-    throw new Error("Chat session is not initialized");
+const fetchApiKey = async (): Promise<string | null> => {
+  try {
+    const response = await fetch("/api/api-key");
+    if (!response.ok) {
+      console.error(`Failed to fetch API key: ${response.statusText}`);
+      return null;
+    }
+    const data = (await response.json()) as { apiKey?: string };
+    if (!data.apiKey) {
+      console.error("API key not found in response");
+      return null;
+    }
+    return data.apiKey;
+  } catch (error) {
+    console.error("Error fetching API key:", error);
+    return null;
   }
+};
 
-  if (!userQuery?.trim()) {
-    throw new Error("Message cannot be empty");
+const getGeminiClient = async (): Promise<GoogleGenerativeAI> => {
+  if (ai) return ai;
+
+  const key = await fetchApiKey();
+  if (!key) {
+    throw new Error("API key is missing. Please check your server configuration.");
   }
 
   try {
-    const response = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ history: chat.history, message: userQuery }),
+    ai = new GoogleGenerativeAI(key);
+    return ai;
+  } catch (error) {
+    console.error("Failed to initialize Gemini client:", error);
+    throw new Error("Could not initialize the Gemini client.");
+  }
+};
+
+export const initializeChatSession = async (): Promise<ChatSession> => {
+  const client = await getGeminiClient();
+
+  try {
+    const model = client.getGenerativeModel({
+      model: GEMINI_MODEL_NAME,
+      generationConfig: {
+        temperature: 0.9,
+        topK: 1,
+        topP: 1,
+        maxOutputTokens: 2048,
+      },
+      safetySettings: [
+        {
+          category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        },
+      ],
     });
 
-    if (!response.ok) {
-      throw new Error("API request failed");
-    }
+    return model.startChat({
+      history: [],
+    });
+  } catch (error) {
+    console.error("Error initializing chat session:", error);
+    const errorMessage =
+      error instanceof Error
+        ? `${CHAT_SESSION_ERROR} ${error.message}`
+        : CHAT_SESSION_ERROR;
+    throw new Error(errorMessage);
+  }
+};
 
-    const data = await response.json();
+export const sendMessageToChat = async (
+  chat: ChatSession,
+  userQuery: string,
+): Promise<{ text: string; sources: GroundingSource[] }> => {
+  if (!chat) {
+    throw new Error("Chat session is not initialized.");
+  }
 
-    chat.history = data.history || [];
+  if (!userQuery?.trim()) {
+    throw new Error("Message cannot be empty.");
+  }
+
+  try {
+    const result = await chat.sendMessage(userQuery);
+    const response = result.response;
+    const text = response.text();
 
     return {
-      text: data.text as string,
-      sources: (data.sources || []) as GroundingSource[],
+      text,
+      sources: [], // Placeholder for future grounding sources
     };
-  } catch (error) {
-    console.error("Error in sendMessageToChat:", error);
+  } catch (error: any) {
+    console.error("Error sending message to chat:", error);
 
-    const errorObj = new Error(API_ERROR_MESSAGE);
-    (errorObj as any).cause = {
-      code: GeminiErrorCode.UNKNOWN_ERROR,
-      originalError: error,
-    };
+    if (error.message?.includes("API key")) {
+      const err = new Error("Invalid API key. Please check your configuration.");
+      (err as any).cause = { code: GeminiErrorCode.INVALID_API_KEY };
+      throw err;
+    }
+
+    if (error.message?.includes("quota")) {
+      const err = new Error("You have exceeded your request quota. Please try again later.");
+      (err as any).cause = { code: GeminiErrorCode.RATE_LIMIT_EXCEEDED };
+      throw err;
+    }
+
+    if (error.message?.includes("safety")) {
+      const err = new Error("The response was blocked due to safety policies.");
+      (err as any).cause = { code: GeminiErrorCode.CONTENT_FILTERED };
+      throw err;
+    }
+
+    const errorMessage = error instanceof Error ? error.message : API_ERROR_MESSAGE;
+    const errorObj = new Error(errorMessage);
+    (errorObj as any).cause = { code: GeminiErrorCode.UNKNOWN_ERROR };
     throw errorObj;
   }
 };
