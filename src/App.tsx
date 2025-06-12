@@ -1,10 +1,18 @@
-import { useState, useEffect, useCallback, FC } from "react";
+import { useState, useEffect, useCallback, FC, lazy, Suspense } from "react";
+import FocusTrap from "focus-trap-react";
 import { MenuIcon, CloseIcon } from "./components/common/Icons";
+import ErrorBoundary from "./components/common/ErrorBoundary";
 import { Notification } from "@/components/common/Notification";
-import { ChatInterface } from "@/components/chat/ChatInterface";
+import { Chat } from "@/types";
 import {
   DISCLAIMER_TEXT,
 } from "./constants";
+
+const ChatInterface = lazy(() =>
+  import("@/components/chat/ChatInterface").then((module) => ({
+    default: module.ChatInterface,
+  }))
+);
 
 declare global {
   namespace JSX {
@@ -12,17 +20,11 @@ declare global {
   }
 }
 
-type Chat = {
-  id: string;
-  title: string;
-  unread: boolean;
-};
-
 const App: FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [activeChat, setActiveChat] = useState<string | null>(null);
-  const [chats] = useState<Chat[]>([
+  const [chats, setChats] = useState<Chat[]>([
     { id: "1", title: "Новий чат", unread: false },
     { id: "2", title: "Юридична консультація", unread: true },
     { id: "3", title: "Аналіз договору", unread: false },
@@ -48,6 +50,17 @@ const App: FC = () => {
       setIsSidebarOpen(false);
     }
   }, [isMobile]);
+
+  const handleNewChat = useCallback(() => {
+    const newChat: Chat = {
+      id: `chat_${Date.now()}`,
+      title: "Новий чат",
+      unread: false,
+    };
+    setChats((prevChats) => [newChat, ...prevChats]);
+    setActiveChat(newChat.id);
+    closeSidebar();
+  }, [closeSidebar]);
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
@@ -77,10 +90,7 @@ const App: FC = () => {
             <button
               type="button"
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              onClick={() => {
-                setActiveChat(null);
-                closeSidebar();
-              }}
+              onClick={handleNewChat}
             >
               Новий чат
             </button>
@@ -98,6 +108,7 @@ const App: FC = () => {
           aria-hidden="true"
         />
 
+        <FocusTrap active={isSidebarOpen}>
         <aside
           className={`fixed inset-y-0 left-0 z-30 w-64 transform bg-white border-r border-gray-200 transition-transform duration-300 ease-in-out ${
             isSidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -144,12 +155,22 @@ const App: FC = () => {
             </div>
           </nav>
         </aside>
+      </FocusTrap>
 
         {/* Main content */}
         <main className="flex-1 flex flex-col overflow-hidden bg-white">
+          <ErrorBoundary>
           <div className="flex-1 overflow-y-auto focus:outline-none">
             <div className="max-w-4xl mx-auto w-full h-full flex flex-col">
-              <ChatInterface className="h-full" />
+              <Suspense
+                fallback={
+                  <div className="flex h-full items-center justify-center">
+                    <p className="text-gray-500">Loading chat...</p>
+                  </div>
+                }
+              >
+                <ChatInterface className="h-full" />
+              </Suspense>
             </div>
           </div>
 
@@ -158,6 +179,7 @@ const App: FC = () => {
               {DISCLAIMER_TEXT}
             </p>
           </footer>
+          </ErrorBoundary>
         </main>
       </div>
     </div>

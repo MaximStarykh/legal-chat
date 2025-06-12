@@ -1,34 +1,29 @@
 import React, { useRef, useEffect } from 'react';
 import { MessageBubble } from '../common/MessageBubble';
-import { TypingIndicator } from './TypingIndicator';
-import { ChatMessage } from '../../types';
+import { Message } from '../../types';
 
 interface MessageListProps {
-  messages: ChatMessage[];
-  isTyping: boolean;
+  messages: Message[];
   className?: string;
 }
 
 export const MessageList: React.FC<MessageListProps> = ({
   messages,
-  isTyping,
   className = '',
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (messages.length > 0 || isTyping) {
+    if (messages.length > 0) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages.length, isTyping]);
+  }, [messages.length]);
 
   return (
     <div className={`space-y-6 py-4 ${className}`}>
-      {messages.map((message) => (
-        <MessageBubble key={message.id} message={message} />
+      {messages.map((message, index) => (
+        <MessageBubble key={index} message={message} />
       ))}
-      
-      {isTyping && <TypingIndicator />}
       
       <div ref={messagesEndRef} className="h-8" />
     </div>

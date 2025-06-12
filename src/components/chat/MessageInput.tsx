@@ -69,11 +69,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             disabled={isLoading}
-            aria-label="Повідомлення"
+            aria-label="Chat message"
             aria-describedby="chat-input-help"
           />
           <p id="chat-input-help" className="sr-only">
-            Натисніть Enter для відправки, Shift+Enter для нового рядка
+            Press Enter to send, Shift+Enter for a new line.
           </p>
         </div>
         <div className="px-3 py-2">
@@ -85,7 +85,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                 ? "text-white bg-blue-600 hover:bg-blue-700"
                 : "text-gray-400 bg-gray-100 cursor-not-allowed"
             }`}
-            aria-label="Відправити повідомлення"
+            aria-label="Send message"
           >
             {isLoading ? (
               <LoadingSpinner className="h-5 w-5 animate-spin" />

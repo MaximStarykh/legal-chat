@@ -1,7 +1,6 @@
 
 import React from 'react';
-import { ChatMessage, Sender } from '../../types';
-import { SourceList } from './SourceList';
+import { Message } from '../../types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -17,11 +16,11 @@ const AIIcon: React.FC = () => (
   </svg>
 );
 
-export const MessageBubble: React.FC<{ message: ChatMessage }> = ({ message }) => {
-  const isUser = message.sender === Sender.USER;
+export const MessageBubble: React.FC<{ message: Message }> = ({ message }) => {
+  const isUser = message.role === 'user';
 
   return (
-    <div className={`group w-full ${message.sender === Sender.USER ? 'bg-white' : 'bg-gray-50'}`}>
+    <div className={`group w-full ${isUser ? 'bg-white' : 'bg-gray-50'}`}>
       <div className="mx-auto max-w-3xl px-4 py-3 sm:py-4">
         <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
           <div 
@@ -147,19 +146,11 @@ export const MessageBubble: React.FC<{ message: ChatMessage }> = ({ message }) =
                     ),
                   }}
                 >
-                  {message.text}
+                  {message.parts.map((part) => part.text).join("")}
                 </ReactMarkdown>
               </div>
               
-              {!isUser && message.sources && message.sources.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-gray-200">
-                  <SourceList sources={message.sources} />
-                </div>
-              )}
               
-              <div className="mt-1 text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </div>
             </div>
           </div>
         </div>

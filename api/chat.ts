@@ -1,73 +1,62 @@
 import { VercelRequest, VercelResponse } from "@vercel/node";
-import { GoogleGenAI, type GroundingChunk } from "@google/genai";
+import {
+  GoogleGenerativeAI,
+  HarmCategory,
+  HarmBlockThreshold,
+} from "@google/generative-ai";
 
-const apiKey = process.env.GEMINI_API_KEY || "";
-const model = process.env.GEMINI_MODEL_NAME || "gemini-2.5-flash-preview-04-17";
-const systemInstruction = process.env.SYSTEM_INSTRUCTION || "";
 
-const extractSources = (groundingMetadata?: {
-  groundingChunks?: GroundingChunk[];
-}): { uri: string; title: string }[] => {
-  if (!groundingMetadata?.groundingChunks?.length) {
-    return [];
-  }
 
-  try {
-    return groundingMetadata.groundingChunks
-      .filter(
-        (
-          chunk,
-        ): chunk is GroundingChunk & { web: { uri: string; title?: string } } =>
-          !!chunk.web?.uri,
-      )
-      .map((chunk) => ({
-        uri: chunk.web.uri,
-        title: chunk.web.title || chunk.web.uri,
-      }));
-  } catch (error) {
-    console.error("Error extracting sources:", error);
-    return [];
-  }
-};
+const safetySettings = [
+  {
+    category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  },
+  {
+    category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  },
+  {
+    category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  },
+  {
+    category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  },
+];
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-
-  if (!apiKey) {
-    return res.status(500).json({ error: "API key not configured" });
-  }
-
-  const { history = [], message } = req.body as {
-    history: any[];
-    message: string;
-  };
-
-  if (!message) {
-    return res.status(400).json({ error: "Message is required" });
-  }
-
   try {
-    const ai = new GoogleGenAI({ apiKey });
-    const chat = ai.chats.create({
-      model,
-      history,
-      config: {
-        systemInstruction,
-        tools: [{ googleSearch: {} }],
-      },
-    });
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Method not allowed" });
+    }
 
-    const response = await chat.sendMessage({ message });
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.error("GEMINI_API_KEY is not set.");
+      return res.status(500).json({ error: "Server configuration error: API key not found." });
+    }
 
-    const sources = extractSources(response.candidates?.[0]?.groundingMetadata);
+    const { history = [], message } = req.body;
+    if (!message) {
+      return res.status(400).json({ error: "Message is required" });
+    }
 
-    res
-      .status(200)
-      .json({ text: response.text, sources, history: chat.getHistory() });
+    const modelName = process.env.GEMINI_MODEL_NAME || "gemini-1.5-flash-latest";
+    const ai = new GoogleGenerativeAI(apiKey);
+    const model = ai.getGenerativeModel({ model: modelName, safetySettings });
+
+    const chat = model.startChat({ history });
+    const result = await chat.sendMessage(message);
+    const response = result.response;
+    const text = response.text();
+
+    return res.status(200).json({ text, sources: [] });
   } catch (error) {
-    console.error("Gemini API error:", error);
-    res.status(500).json({ error: "Failed to generate response" });
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+    console.error("API handler error:", error);
+    return res.status(500).json({ error: `Failed to generate response from the AI: ${errorMessage}` });
   }
 }
+

@@ -1,6 +1,5 @@
 import React, { useCallback, useState } from 'react';
 import { useChat } from '../../hooks/useChat';
-import type { ChatMessage } from '../../types';
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
 import { ErrorMessage } from './ErrorMessage';
@@ -14,26 +13,19 @@ import {
 } from "../../constants";
 
 interface ChatInterfaceProps {
-  /** Initial messages to display */
-  initialMessages?: ChatMessage[];
   /** Additional class name for the container */
   className?: string;
 }
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({
-  initialMessages = [],
   className = "",
 }) => {
   const {
     messages,
-    sendMessage,
-    isTyping,
+    handleSendMessage: sendMessage,
     error,
-    isLoading,
-    retryLastMessage,
-    reinitializeChat,
-    clearError,
-  } = useChat(initialMessages);
+    loading: isLoading,
+  } = useChat();
 
   const [input, setInput] = useState("");
 
@@ -48,16 +40,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     [input, sendMessage],
   );
 
-  const handleRetry = useCallback(() => {
-    if (error?.isRecoverable) {
-      clearError();
-      if (error.code === "CHAT_SESSION_ERROR") {
-        reinitializeChat();
-      } else {
-        retryLastMessage();
-      }
-    }
-  }, [error, clearError, retryLastMessage, reinitializeChat]);
+  
 
   return (
     <div className={`flex flex-col h-full ${className}`}>
@@ -71,16 +54,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               disclaimer={AI_DISCLAIMER}
             />
           ) : (
-            <MessageList messages={messages} isTyping={isTyping} />
+            <MessageList messages={messages} />
           )}
         </div>
       </div>
 
       {/* Input area */}
       <div className="border-t border-gray-200 bg-white/80 backdrop-blur-sm p-4">
-        {error && (
-          <ErrorMessage error={error} onRetry={handleRetry} className="mb-4" />
-        )}
+        {error && <ErrorMessage message={error} className="mb-4" />}
 
         <MessageInput
           value={input}
