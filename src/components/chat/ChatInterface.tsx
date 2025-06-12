@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { useChat } from '../../hooks/useChat';
+import type { ChatMessage } from '@/types';
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
 import { ErrorMessage } from './ErrorMessage';
@@ -17,7 +18,7 @@ interface ChatInterfaceProps {
   /** Callback when the API key is missing */
   onApiKeyMissing?: () => void;
   /** Initial messages to display */
-  initialMessages?: any[];
+  initialMessages?: ChatMessage[];
   /** Additional class name for the container */
   className?: string;
 }
