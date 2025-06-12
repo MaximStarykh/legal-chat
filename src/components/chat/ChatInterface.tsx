@@ -1,9 +1,10 @@
-import React, { useCallback, useState } from "react";
-import { useChat } from "../../hooks/useChat";
-import { MessageList } from "./MessageList";
-import { MessageInput } from "./MessageInput";
-import { ErrorMessage } from "./ErrorMessage";
-import { WelcomeScreen } from "./WelcomeScreen";
+import React, { useCallback, useState } from 'react';
+import { useChat } from '../../hooks/useChat';
+import type { ChatMessage } from '../../types';
+import { MessageList } from './MessageList';
+import { MessageInput } from './MessageInput';
+import { ErrorMessage } from './ErrorMessage';
+import { WelcomeScreen } from './WelcomeScreen';
 import {
   WELCOME_TITLE,
   WELCOME_SUBTITLE,
@@ -15,7 +16,7 @@ import {
 
 interface ChatInterfaceProps {
   /** Initial messages to display */
-  initialMessages?: any[];
+  initialMessages?: ChatMessage[];
   /** Additional class name for the container */
   className?: string;
 }
