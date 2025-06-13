@@ -168,8 +168,11 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
     }
     
     try {
+      const modelName = process.env.GEMINI_MODEL_NAME || 'gemini-1.5-flash';
+      console.log('Using model:', modelName);
+      
       const model = genAI.getGenerativeModel({ 
-        model: process.env.GEMINI_MODEL_NAME || 'gemini-1.5-flash', 
+        model: modelName,
         generationConfig: { 
           temperature: 0.9,
           maxOutputTokens: 1000,

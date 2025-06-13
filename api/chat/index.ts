@@ -61,10 +61,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }))
     }));
 
-    // Get the Gemini Pro model
+    // Get the Gemini model with fallback to gemini-1.5-flash
+    const modelName = process.env.GEMINI_MODEL_NAME || 'gemini-1.5-flash';
+    console.log('Using model:', modelName);
+    
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-pro',
-      safetySettings
+      model: modelName,
+      safetySettings,
+      generationConfig: {
+        maxOutputTokens: 1000,
+      },
     });
 
     // Start a chat session
