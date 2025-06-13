@@ -15,28 +15,37 @@ export const useChat = () => {
 
     // Optimistically add the user's message to the UI
     const userTurn: Message = { role: "user", parts: [{ text: userMessage }] };
-    setMessages(prev => [...prev, userTurn]);
+    
+    // Use functional update to ensure we have the latest state
+    setMessages(prev => {
+      const updatedMessages = [...prev, userTurn];
+      
+      // Start the API call with the current messages
+      (async () => {
+        try {
+          // Pass the updated messages array to the service
+          const { text, sources } = await sendMessage(
+            updatedMessages,
+            userMessage
+          );
 
-    try {
-      // Pass the PREVIOUS messages array and the new message text to the service
-      const { text, sources } = await sendMessage(
-        messages, // This is the state BEFORE the current user message was added
-        userMessage
-      );
-
-      // Add the bot's response to the UI
-      const botMessage: Message = { role: "model", parts: [{ text }], sources };
-      setMessages((prev) => [...prev, botMessage]);
-
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "An unknown error occurred.";
-      setError(errorMessage);
-      // On error, revert the optimistic UI update by removing the last message
-      setMessages(prev => prev.slice(0, -1));
-    } finally {
-      setLoading(false);
-    }
-  }, [messages]);
+          // Add the bot's response to the UI
+          const botMessage: Message = { role: "model", parts: [{ text }], sources };
+          setMessages(prevMsgs => [...prevMsgs, botMessage]);
+          
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : "An unknown error occurred.";
+          setError(errorMessage);
+          // On error, revert the optimistic UI update by removing the last message
+          setMessages(prevMsgs => prevMsgs.slice(0, -1));
+        } finally {
+          setLoading(false);
+        }
+      })();
+      
+      return updatedMessages;
+    });
+  }, []);
 
   // The `sources` state is no longer needed as it's part of each message
   return { messages, loading, error, handleSendMessage };

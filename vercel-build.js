@@ -2,26 +2,35 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-console.log('Starting Vercel build...');
+console.log('🚀 Starting Vercel build...');
 
-// Create .vercel directory if it doesn't exist
-const vercelDir = path.join(process.cwd(), '.vercel');
-if (!fs.existsSync(vercelDir)) {
-  fs.mkdirSync(vercelDir, { recursive: true });
-}
+// Create necessary directories
+const createDir = (dir) => {
+  if (!fs.existsSync(dir)) {
+    console.log(`Creating directory: ${dir}`);
+    fs.mkdirSync(dir, { recursive: true });
+  }
+};
 
 // Install dependencies
-console.log('Installing dependencies...');
+console.log('📦 Installing dependencies...');
 try {
-  execSync('npm install --production=false', { stdio: 'inherit' });
+  // Install all dependencies including devDependencies
+  execSync('npm ci --prefer-offline --no-audit --progress=false', { 
+    stdio: 'inherit',
+    env: { ...process.env, NODE_ENV: 'development' }
+  });
   
   // Build the application
-  console.log('Building application...');
-  execSync('npm run build', { stdio: 'inherit' });
+  console.log('🔨 Building application...');
+  execSync('npm run build', { 
+    stdio: 'inherit',
+    env: { ...process.env, NODE_ENV: 'production' }
+  });
   
-  console.log('Build completed successfully!');
+  console.log('✅ Build completed successfully!');
   process.exit(0);
 } catch (error) {
-  console.error('Build failed:', error);
+  console.error('❌ Build failed:', error);
   process.exit(1);
 }
