@@ -20,9 +20,9 @@ const getGeminiClient = (): GoogleGenerativeAI | null => {
     try {
       genAI = new GoogleGenerativeAI(currentKey);
       cachedApiKey = currentKey;
-      if (import.meta.env.DEV) console.log('Gemini AI client initialized');
+      if (process.env.NODE_ENV === 'development') console.log('Gemini AI client initialized');
     } catch (error) {
-      if (import.meta.env.DEV) console.error('Failed to initialize Gemini AI client:', error);
+      if (process.env.NODE_ENV === 'development') console.error('Failed to initialize Gemini AI client:', error);
       genAI = null;
     }
   }
@@ -91,7 +91,7 @@ const withErrorHandling = (handler: (req: VercelRequest, res: VercelResponse) =>
     try {
       await handler(req, res);
     } catch (error: any) {
-      if (import.meta.env.DEV) console.error('Unhandled error:', error);
+      if (process.env.NODE_ENV === 'development') console.error('Unhandled error:', error);
 
       const statusCode = error.statusCode || 500;
       const errorMessage = error.error || 'Internal Server Error';
@@ -105,18 +105,18 @@ const withErrorHandling = (handler: (req: VercelRequest, res: VercelResponse) =>
 
 // Main chat request handler
 const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promise<void> => {
-  if (import.meta.env.DEV) console.log('=== CHAT REQUEST HANDLER STARTED ===');
+  if (process.env.NODE_ENV === 'development') console.log('=== CHAT REQUEST HANDLER STARTED ===');
 
   // Helper function to send error response
   const sendErrorResponse = (statusCode: number, error: string, message: string) => {
-    if (import.meta.env.DEV)
+    if (process.env.NODE_ENV === 'development')
       console.error(`Sending error response (${statusCode}):`, { error, message });
     res.status(statusCode).json({ error, message });
   };
 
   // Helper function to send success response
   const sendSuccessResponse = (data: { text: string; sources?: any[] }) => {
-    if (import.meta.env.DEV)
+    if (process.env.NODE_ENV === 'development')
       console.log('Sending success response with data:', {
         text: data.text.substring(0, 100) + (data.text.length > 100 ? '...' : ''),
         sourcesCount: data.sources?.length || 0,
@@ -127,21 +127,21 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
       sources: data.sources || [],
     });
   };
-  if (import.meta.env.DEV) console.log('Setting CORS headers');
+  if (process.env.NODE_ENV === 'development') console.log('Setting CORS headers');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
-    if (import.meta.env.DEV) console.log('Handling OPTIONS preflight request in chat handler');
+    if (process.env.NODE_ENV === 'development') console.log('Handling OPTIONS preflight request in chat handler');
     res.status(200).end();
     return;
   }
 
   const apiKey = process.env.GEMINI_API_KEY?.trim();
   if (!apiKey) {
-    if (import.meta.env.DEV) console.error('GEMINI_API_KEY is not configured');
+    if (process.env.NODE_ENV === 'development') console.error('GEMINI_API_KEY is not configured');
     res.setHeader('Retry-After', '60');
     sendErrorResponse(
       503,
@@ -160,14 +160,14 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
   // Only allow POST requests
   if (req.method !== 'POST') {
     const errorMsg = `Method ${req.method} not allowed`;
-    if (import.meta.env.DEV) console.error(errorMsg);
+    if (process.env.NODE_ENV === 'development') console.error(errorMsg);
     res.setHeader('Allow', 'POST');
     sendErrorResponse(405, 'Method Not Allowed', 'Only POST method is allowed');
     return;
   }
 
   // Log request details for debugging
-  if (import.meta.env.DEV)
+  if (process.env.NODE_ENV === 'development')
     console.log('Request details:', {
       method: req.method,
       url: req.url,
@@ -178,7 +178,7 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
   // Validate request body with better error handling
   if (!req.body) {
     const errorMsg = 'No request body provided';
-    if (import.meta.env.DEV) console.error(errorMsg, { headers: req.headers });
+    if (process.env.NODE_ENV === 'development') console.error(errorMsg, { headers: req.headers });
     sendErrorResponse(400, 'Bad Request', errorMsg);
     return;
   }
@@ -186,14 +186,14 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
   // Parse body if it's a string with better error handling
   let requestBody: any;
   try {
-    if (import.meta.env.DEV) console.log('Request body type:', typeof req.body);
+    if (process.env.NODE_ENV === 'development') console.log('Request body type:', typeof req.body);
 
     // If body is a string, parse it as JSON
     if (typeof req.body === 'string') {
       try {
         requestBody = JSON.parse(req.body);
       } catch (parseError) {
-        if (import.meta.env.DEV) console.error('Failed to parse JSON body:', parseError);
+        if (process.env.NODE_ENV === 'development') console.error('Failed to parse JSON body:', parseError);
         sendErrorResponse(400, 'Bad Request', 'Invalid JSON in request body');
         return;
       }
@@ -201,12 +201,12 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
       // Body is already an object (parsed by body parser middleware)
       requestBody = req.body;
     } else {
-      if (import.meta.env.DEV) console.error('Unexpected request body type:', typeof req.body);
+      if (process.env.NODE_ENV === 'development') console.error('Unexpected request body type:', typeof req.body);
       sendErrorResponse(400, 'Bad Request', 'Invalid request body format');
       return;
     }
 
-    if (import.meta.env.DEV)
+    if (process.env.NODE_ENV === 'development')
       console.log(
         'Parsed request body:',
         JSON.stringify(
@@ -223,14 +223,14 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
       );
   } catch (e) {
     const error = e as Error;
-    if (import.meta.env.DEV) console.error('Failed to process request body:', error);
-    if (import.meta.env.DEV) console.error('Request body that caused error:', req.body);
+    if (process.env.NODE_ENV === 'development') console.error('Failed to process request body:', error);
+    if (process.env.NODE_ENV === 'development') console.error('Request body that caused error:', req.body);
     sendErrorResponse(400, 'Bad Request', 'Failed to process request body');
     return;
   }
 
   const { history = [], message } = requestBody as ChatRequest;
-  if (import.meta.env.DEV)
+  if (process.env.NODE_ENV === 'development')
     console.log('Extracted from request:', {
       messageLength: message?.length || 0,
       historyLength: history?.length || 0,
@@ -239,7 +239,7 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
   // Validate message with better error handling
   if (typeof message !== 'string' || !message.trim()) {
     const errorMsg = `Invalid message format. Expected non-empty string, got: ${typeof message}`;
-    if (import.meta.env.DEV) console.error(errorMsg, { message });
+    if (process.env.NODE_ENV === 'development') console.error(errorMsg, { message });
     sendErrorResponse(400, 'Bad Request', 'A non-empty message is required');
     return;
   }
@@ -248,7 +248,7 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
     if (!gemini) {
       const errorMsg =
         'Gemini API client is not properly initialized. Please check your API key and configuration.';
-      if (import.meta.env.DEV)
+      if (process.env.NODE_ENV === 'development')
         console.error(errorMsg, {
           hasApiKey: !!apiKey,
           apiKeyPrefix: apiKey ? `${apiKey.substring(0, 3)}...` : 'none',
@@ -261,7 +261,7 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
 
     try {
       const modelName = process.env.GEMINI_MODEL_NAME || 'gemini-1.5-flash';
-      if (import.meta.env.DEV) console.log('Using model:', modelName);
+      if (process.env.NODE_ENV === 'development') console.log('Using model:', modelName);
 
       if (!modelName) {
         throw new Error('GEMINI_MODEL_NAME environment variable is not set');
@@ -280,7 +280,7 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
           })),
         };
 
-        if (import.meta.env.DEV)
+        if (process.env.NODE_ENV === 'development')
           console.log('Initializing model with config:', JSON.stringify(modelConfig, null, 2));
 
         const model = gemini.getGenerativeModel({
@@ -292,7 +292,7 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
           safetySettings,
         });
 
-        if (import.meta.env.DEV) console.log('Model initialized, starting chat...');
+        if (process.env.NODE_ENV === 'development') console.log('Model initialized, starting chat...');
 
         // Convert history to the format expected by the API
         const chat = model.startChat({
@@ -300,7 +300,7 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
         });
 
         try {
-          if (import.meta.env.DEV)
+          if (process.env.NODE_ENV === 'development')
             console.log('Sending message to Gemini API...', {
               messageLength: message.length,
               historyLength: history.length,
@@ -316,14 +316,14 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
           // Send the message and get the response
           const result = await chat.sendMessage(message);
 
-          if (import.meta.env.DEV) console.log('Received response from Gemini API, processing...');
+          if (process.env.NODE_ENV === 'development') console.log('Received response from Gemini API, processing...');
           const response = await result.response;
           const text = response.text();
 
-          if (import.meta.env.DEV) console.log('Successfully processed response from Gemini API');
+          if (process.env.NODE_ENV === 'development') console.log('Successfully processed response from Gemini API');
 
           // Log a small part of the response for debugging
-          if (import.meta.env.DEV)
+          if (process.env.NODE_ENV === 'development')
             console.log(
               'Response preview:',
               text.substring(0, 100) + (text.length > 100 ? '...' : '')
@@ -333,7 +333,7 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
           sendSuccessResponse({ text, sources: [] });
           return;
         } catch (sendError) {
-          if (import.meta.env.DEV)
+          if (process.env.NODE_ENV === 'development')
             console.error('Error sending message to Gemini API:', {
               error: sendError,
               message: sendError.message,
@@ -344,7 +344,7 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
           throw sendError;
         }
       } catch (modelError: any) {
-        if (import.meta.env.DEV)
+        if (process.env.NODE_ENV === 'development')
           console.error('Model initialization or execution error:', {
             error: modelError,
             errorMessage: modelError.message,
@@ -366,7 +366,7 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
         throw modelError; // Re-throw to be caught by the outer catch
       }
     } catch (apiError: any) {
-      if (import.meta.env.DEV)
+      if (process.env.NODE_ENV === 'development')
         console.error('Gemini API Error:', {
           error: apiError,
           errorMessage: apiError?.message,
@@ -407,7 +407,7 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
       return;
     }
   } catch (error: any) {
-    if (import.meta.env.DEV) console.error('Unexpected error in chat handler:', error);
+    if (process.env.NODE_ENV === 'development') console.error('Unexpected error in chat handler:', error);
 
     let errorMessage = 'An unexpected error occurred while processing your request';
     let errorDetails = error instanceof Error ? error.message : 'Unknown error';
@@ -437,7 +437,7 @@ export default async function (req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   // Log incoming request
-  if (import.meta.env.DEV)
+  if (process.env.NODE_ENV === 'development')
     console.log('Incoming request:', {
       method: req.method,
       url: req.url,
@@ -447,18 +447,18 @@ export default async function (req: VercelRequest, res: VercelResponse) {
 
   // Handle preflight
   if (req.method === 'OPTIONS') {
-    if (import.meta.env.DEV) console.log('Handling OPTIONS preflight request');
+    if (process.env.NODE_ENV === 'development') console.log('Handling OPTIONS preflight request');
     res.status(200).end();
     return;
   }
 
   // Handle the request
   try {
-    if (import.meta.env.DEV) console.log('Processing request...');
+    if (process.env.NODE_ENV === 'development') console.log('Processing request...');
     await handler(req, res);
-    if (import.meta.env.DEV) console.log('Request processed successfully');
+    if (process.env.NODE_ENV === 'development') console.log('Request processed successfully');
   } catch (error) {
-    if (import.meta.env.DEV)
+    if (process.env.NODE_ENV === 'development')
       console.error('Unhandled error in API route:', {
         error: error.message,
         stack: error.stack,
@@ -476,7 +476,7 @@ export default async function (req: VercelRequest, res: VercelResponse) {
         ...(process.env.NODE_ENV !== 'production' ? { details: error.message } : {}),
       });
     } else {
-      if (import.meta.env.DEV) console.error('Headers already sent, cannot send error response');
+      if (process.env.NODE_ENV === 'development') console.error('Headers already sent, cannot send error response');
     }
   }
 }
