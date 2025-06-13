@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "name": "legal-chat-app",
   "builds": [
     { "src": "api/chat/route.ts", "use": "@vercel/node" },
     { "src": "package.json", "use": "@vercel/static-build" }
