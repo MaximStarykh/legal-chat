@@ -12,8 +12,10 @@ export default defineConfig(({ mode }) => {
   // Determine the API URL based on the environment
   const apiUrl = env.VITE_API_URL || 'http://localhost:3001';
   const isProduction = mode === 'production';
+  const base = isProduction ? '/' : '/';
 
   return {
+    base,
     plugins: [
       react(),
     ],
@@ -70,6 +72,7 @@ export default defineConfig(({ mode }) => {
     // Build configuration
     build: {
       outDir: 'dist',
+      assetsDir: 'assets',
       emptyOutDir: true,
       sourcemap: !isProduction,
       minify: isProduction ? 'esbuild' : false,
