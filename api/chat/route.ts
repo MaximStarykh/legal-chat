@@ -232,6 +232,7 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
 // Export the handler with error handling
 const handler = withErrorHandling(handleChatRequest);
 
+// Export the handler for Vercel
 export default async function(req: VercelRequest, res: VercelResponse) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -244,7 +245,16 @@ export default async function(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  return handler(req, res);
+  // Handle the request
+  try {
+    await handler(req, res);
+  } catch (error) {
+    console.error('Unhandled error in API route:', error);
+    res.status(500).json({ 
+      error: 'Internal Server Error',
+      message: 'An unexpected error occurred'
+    });
+  }
 };
 
 // Export types for client-side use
