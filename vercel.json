@@ -13,9 +13,9 @@
       }
     }
   ],
-  "routes": [
-    { "src": "/api/chat", "dest": "/api/chat" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "rewrites": [
+    { "source": "/api/chat", "destination": "/api/chat" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
     {
