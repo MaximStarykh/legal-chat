@@ -6,6 +6,52 @@ import {
   Content,
 } from '@google/generative-ai';
 
+const getAllowedOrigins = (): string[] =>
+  process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',')
+        .map((o) => o.trim())
+        .filter(Boolean)
+    : [];
+
+const applyCorsHeaders = (req: VercelRequest, res: VercelResponse): void => {
+  const origin = req.headers.origin as string | undefined;
+  const allowedOrigins = getAllowedOrigins();
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+};
+
+const rateLimitMap = new Map<string, { count: number; start: number }>();
+const RATE_LIMIT_WINDOW = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000', 10);
+const RATE_LIMIT_MAX = parseInt(process.env.RATE_LIMIT_MAX || '60', 10);
+
+const withRateLimit = (handler: (req: VercelRequest, res: VercelResponse) => Promise<void>) => {
+  return async (req: VercelRequest, res: VercelResponse): Promise<void> => {
+    if (req.method !== 'OPTIONS') {
+      const ip =
+        ((req.headers['x-forwarded-for'] as string) || '').split(',')[0].trim() ||
+        req.socket.remoteAddress ||
+        'unknown';
+      const now = Date.now();
+      const entry = rateLimitMap.get(ip) || { count: 0, start: now };
+      if (now - entry.start > RATE_LIMIT_WINDOW) {
+        entry.start = now;
+        entry.count = 1;
+      } else {
+        entry.count += 1;
+      }
+      rateLimitMap.set(ip, entry);
+      if (entry.count > RATE_LIMIT_MAX) {
+        res.status(429).json({ error: 'Too Many Requests' });
+        return;
+      }
+    }
+    await handler(req, res);
+  };
+};
+
 // --- GEMINI CLIENT SETUP ---
 let genAI: GoogleGenerativeAI | null = null;
 let cachedApiKey: string | null = null;
@@ -126,9 +172,7 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
     });
   };
   console.log('Setting CORS headers');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  applyCorsHeaders(req, res);
 
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
@@ -415,14 +459,11 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
 };
 
 // Export the handler with error handling
-const handler = withErrorHandling(handleChatRequest);
+const handler = withErrorHandling(withRateLimit(handleChatRequest));
 
 // Export the handler for Vercel
 export default async function (req: VercelRequest, res: VercelResponse) {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  applyCorsHeaders(req, res);
 
   // Log incoming request
   console.log('Incoming request:', {
