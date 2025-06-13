@@ -4,6 +4,7 @@ module.exports = {
     browser: true,
     es2021: true,
     node: true,
+    'vitest/env': true,
   },
   extends: [
     'eslint:recommended',
@@ -23,7 +24,7 @@ module.exports = {
     ecmaVersion: 'latest',
     sourceType: 'module',
   },
-  plugins: ['react', 'react-hooks', '@typescript-eslint', 'prettier'],
+  plugins: ['react', 'react-hooks', '@typescript-eslint', 'prettier', 'vitest'],
   settings: {
     react: {
       version: 'detect',
@@ -52,6 +53,9 @@ module.exports = {
   overrides: [
     {
       files: ['**/*.test.ts', '**/*.test.tsx'],
+      env: {
+        'vitest/env': true,
+      },
     },
   ],
 };
