@@ -11,8 +11,10 @@ let genAI: GoogleGenerativeAI | null = null;
 let cachedApiKey: string | null = null;
 
 const getGeminiClient = (): GoogleGenerativeAI | null => {
-  const currentKey = process.env.GEMINI_API_KEY?.trim();
+  const currentKey = process.env.GEMINI_API_KEY?.trim() || process.env.VITE_GEMINI_API_KEY?.trim();
   if (!currentKey) {
+    console.error('GEMINI_API_KEY is not set in environment variables');
+    console.log('Available environment variables:', Object.keys(process.env).join(', '));
     return null;
   }
 
@@ -430,56 +432,7 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
 const handler = withErrorHandling(handleChatRequest);
 
 // Export the handler for Vercel
-export default async function (req: VercelRequest, res: VercelResponse) {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-  // Log incoming request
-  if (process.env.NODE_ENV === 'development')
-    console.log('Incoming request:', {
-      method: req.method,
-      url: req.url,
-      headers: req.headers,
-      body: req.body ? JSON.stringify(req.body).substring(0, 500) + '...' : 'empty',
-    });
-
-  // Handle preflight
-  if (req.method === 'OPTIONS') {
-    if (process.env.NODE_ENV === 'development') console.log('Handling OPTIONS preflight request');
-    res.status(200).end();
-    return;
-  }
-
-  // Handle the request
-  try {
-    if (process.env.NODE_ENV === 'development') console.log('Processing request...');
-    await handler(req, res);
-    if (process.env.NODE_ENV === 'development') console.log('Request processed successfully');
-  } catch (error) {
-    if (process.env.NODE_ENV === 'development')
-      console.error('Unhandled error in API route:', {
-        error: error.message,
-        stack: error.stack,
-        method: req.method,
-        url: req.url,
-        body: req.body ? JSON.stringify(req.body).substring(0, 500) + '...' : 'empty',
-      });
-
-    // Ensure we haven't already sent a response
-    if (!res.headersSent) {
-      res.status(500).json({
-        error: 'Internal Server Error',
-        message: 'An unexpected error occurred',
-        // Only include error details in development
-        ...(process.env.NODE_ENV !== 'production' ? { details: error.message } : {}),
-      });
-    } else {
-      if (process.env.NODE_ENV === 'development') console.error('Headers already sent, cannot send error response');
-    }
-  }
-}
+export default handler;
 
 // Export types for client-side use
 export type { ChatMessage, ChatRequest, ChatResponse };

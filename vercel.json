@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/chat.ts",
+      "src": "api/chat/index.ts",
       "use": "@vercel/node"
     },
     {
@@ -23,12 +23,10 @@
       "headers": [
         { "key": "Access-Control-Allow-Origin", "value": "*" },
         { "key": "Access-Control-Allow-Methods", "value": "GET,OPTIONS,POST" },
-        {
-          "key": "Access-Control-Allow-Headers",
-          "value": "X-Requested-With, Content-Type, Accept, Authorization"
-        },
+        { "key": "Access-Control-Allow-Headers", "value": "X-Requested-With, Content-Type, Accept, Authorization" },
         { "key": "Access-Control-Allow-Credentials", "value": "true" },
-        { "key": "Cache-Control", "value": "no-cache" }
+        { "key": "Cache-Control", "value": "no-cache" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" }
       ]
     },
     {
