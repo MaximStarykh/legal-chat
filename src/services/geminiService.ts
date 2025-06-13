@@ -1,92 +1,47 @@
-import type { GroundingSource, Message } from "../types";
-
-// Get the API URL based on the environment
-const getApiUrl = (): string => {
-  // In production, use relative URL (handled by Vercel rewrites)
-  if (import.meta.env.PROD) {
-    return '/api/chat';
-  }
-  
-  // In development, use the full URL from environment variable or default
-  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-  return `${baseUrl}/api/chat`;
-};
+import type { GroundingSource, Message } from '../types';
+import { apiClient } from './apiClient';
 
 export const sendMessage = async (
   history: Message[],
   message: string
 ): Promise<{ text: string; sources: GroundingSource[] }> => {
   if (!message?.trim()) {
-    throw new Error("Message cannot be empty.");
+    throw new Error('Message cannot be empty.');
   }
 
   try {
     // Pre-process the history to send only the required fields
-    const processedHistory = history.map(({ role, parts }) => ({ 
-      role, 
-      parts: parts.map(p => ({
-        text: typeof p === 'string' ? p : p.text
-      }))
+    const processedHistory = history.map(({ role, parts }) => ({
+      role,
+      parts: parts.map((p) => ({
+        text: typeof p === 'string' ? p : p.text,
+      })),
     }));
 
-    const apiUrl = getApiUrl();
-    console.log('Sending request to:', apiUrl);
-    
-    const payload = { 
-      history: processedHistory, 
-      message: message.trim() 
+    const payload = {
+      history: processedHistory,
+      message: message.trim(),
     };
 
-    console.log('Request payload:', JSON.stringify(payload, null, 2));
-    
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const responseText = await response.text();
-    let data;
-    
-    try {
-      data = responseText ? JSON.parse(responseText) : {};
-    } catch (e) {
-      console.error('Failed to parse JSON response:', responseText);
-      throw new Error('Invalid JSON response from server');
-    }
-
-    if (!response.ok) {
-      console.error('API Error Response:', {
-        status: response.status,
-        statusText: response.statusText,
-        data
-      });
-      
-      // Create a more detailed error object
-      const error = new Error(data?.message || `Request failed with status ${response.status}`) as any;
-      error.status = response.status;
-      error.data = data;
-      throw error;
+    const { data, error } = await apiClient.postChat<{
+      text: string;
+      sources: GroundingSource[];
+    }>(payload);
+    if (error || !data) {
+      throw new Error(error || 'Request failed');
     }
 
     return {
       text: data.text || '',
-      sources: Array.isArray(data.sources) ? data.sources : []
+      sources: Array.isArray(data.sources) ? data.sources : [],
     };
   } catch (error) {
-    console.error('Error in sendMessage:', error);
-    
     if (error instanceof Error) {
       if (error.message.includes('Failed to fetch')) {
-        throw new Error('Failed to connect to the server. Please check your internet connection and try again.');
+        throw new Error('Failed to connect to the server. Please try again.');
       }
       throw error;
     }
-    
     throw new Error('An unknown error occurred while processing your request');
   }
 };
-

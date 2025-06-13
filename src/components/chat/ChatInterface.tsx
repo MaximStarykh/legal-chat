@@ -4,13 +4,7 @@ import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
 import { ErrorMessage } from './ErrorMessage';
 import { WelcomeScreen } from './WelcomeScreen';
-import {
-  WELCOME_TITLE,
-  WELCOME_SUBTITLE,
-  AI_DISCLAIMER,
-  INPUT_PLACEHOLDER,
-
-} from "../../constants";
+import { useTranslation } from 'react-i18next';
 
 interface ChatInterfaceProps {
   /** Additional class name for the container */
@@ -18,8 +12,9 @@ interface ChatInterfaceProps {
 }
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({
-  className = "",
+  className = '',
 }) => {
+  const { t } = useTranslation();
   const {
     messages,
     handleSendMessage: sendMessage,
@@ -27,20 +22,18 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     loading: isLoading,
   } = useChat();
 
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState('');
 
   const handleSubmit = useCallback(
     async (e?: React.FormEvent) => {
       e?.preventDefault();
       if (input.trim()) {
         await sendMessage(input);
-        setInput("");
+        setInput('');
       }
     },
-    [input, sendMessage],
+    [input, sendMessage]
   );
-
-  
 
   return (
     <div className={`flex flex-col h-full ${className}`}>
@@ -49,9 +42,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         <div className="max-w-4xl mx-auto w-full">
           {messages.length === 0 ? (
             <WelcomeScreen
-              title={WELCOME_TITLE}
-              subtitle={WELCOME_SUBTITLE}
-              disclaimer={AI_DISCLAIMER}
+              title={t('welcomeTitle')}
+              subtitle={t('welcomeSubtitle')}
+              disclaimer={t('aiDisclaimer')}
             />
           ) : (
             <MessageList messages={messages} />
@@ -66,7 +59,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         <MessageInput
           value={input}
           isLoading={isLoading}
-          placeholder={INPUT_PLACEHOLDER}
+          placeholder={t('inputPlaceholder')}
           onChange={setInput}
           onSubmit={handleSubmit}
         />

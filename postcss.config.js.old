@@ -1,7 +1,0 @@
-// This is the old config - keeping as backup
-// module.exports = {
-//   plugins: {
-//     tailwindcss: {},
-//     autoprefixer: {},
-//   },
-// }
