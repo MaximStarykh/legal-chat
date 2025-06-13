@@ -21,12 +21,20 @@ export default defineConfig(({ mode }) => {
     define: {
       'process.env': {
         NODE_ENV: JSON.stringify(mode),
-        VITE_API_URL: JSON.stringify(env.VITE_API_URL || 'https://legal-chat-api.vercel.app/api')
+        VITE_API_URL: JSON.stringify(env.VITE_API_URL || (isProduction ? 'https://legal-chat-i5hldtcl9-zombua-7423s-projects.vercel.app/api' : 'http://localhost:3000/api'))
       }
     },
     server: {
       port: 3000,
       open: true,
+      proxy: !isProduction ? {
+        '/api': {
+          target: 'http://localhost:3000',
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace(/^\/api/, '')
+        }
+      } : undefined,
     },
     build: {
       outDir: 'dist',
