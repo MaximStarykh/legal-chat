@@ -2,14 +2,11 @@ import type { GroundingSource, Message } from '../types';
 
 // Get the API URL based on the environment
 const getApiUrl = (): string => {
-  // In production, use relative URL (handled by Vercel rewrites)
-  if (import.meta.env.PROD) {
-    return '/api/chat';
+  const baseUrl = import.meta.env.VITE_API_URL;
+  if (baseUrl) {
+    return `${baseUrl.replace(/\/$/, '')}/api/chat`;
   }
-
-  // In development, use the full URL from environment variable or default
-  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-  return `${baseUrl}/api/chat`;
+  return import.meta.env.PROD ? '/api/chat' : 'http://localhost:3001/api/chat';
 };
 
 export const sendMessage = async (
@@ -37,7 +34,8 @@ export const sendMessage = async (
       message: message.trim(),
     };
 
-    if (import.meta.env.DEV) console.log('Request payload:', JSON.stringify(payload, null, 2));
+    if (import.meta.env.DEV)
+      console.log('Request payload:', JSON.stringify(payload, null, 2));
 
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -54,7 +52,8 @@ export const sendMessage = async (
     try {
       data = responseText ? JSON.parse(responseText) : {};
     } catch (e) {
-      if (import.meta.env.DEV) console.error('Failed to parse JSON response:', responseText);
+      if (import.meta.env.DEV)
+        console.error('Failed to parse JSON response:', responseText);
       throw new Error('Invalid JSON response from server');
     }
 
