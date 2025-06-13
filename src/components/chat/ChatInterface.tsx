@@ -9,6 +9,8 @@ import { useTranslation } from 'react-i18next';
 interface ChatInterfaceProps {
   /** Additional class name for the container */
   className?: string;
+  /** Callback function when API key is missing */
+  onApiKeyMissing?: () => void;
 }
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({
