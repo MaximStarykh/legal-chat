@@ -68,6 +68,7 @@ interface ChatResponse {
     title: string;
     text: string;
   }>;
+  modelName?: string;
 }
 
 // Format chat history for the API
@@ -114,7 +115,7 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
   };
 
   // Helper function to send success response
-  const sendSuccessResponse = (data: { text: string; sources?: any[] }) => {
+  const sendSuccessResponse = (data: { text: string; sources?: any[]; modelName?: string }) => {
     console.log('Sending success response with data:', {
       text: data.text.substring(0, 100) + (data.text.length > 100 ? '...' : ''),
       sourcesCount: data.sources?.length || 0,
@@ -123,6 +124,7 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
     res.status(200).json({
       text: data.text,
       sources: data.sources || [],
+      modelName: data.modelName,
     });
   };
   console.log('Setting CORS headers');
@@ -321,7 +323,7 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
           );
 
           // Send success response
-          sendSuccessResponse({ text, sources: [] });
+          sendSuccessResponse({ text, sources: [], modelName });
           return;
         } catch (sendError) {
           console.error('Error sending message to Gemini API:', {
