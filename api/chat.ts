@@ -84,7 +84,6 @@ const withErrorHandling = (handler: (req: VercelRequest, res: VercelResponse) =>
 
 // Main chat request handler
 const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promise<void> => {
-  console.log('=== CHAT REQUEST HANDLER STARTED ===');
   
   // Helper function to send error response
   const sendErrorResponse = (statusCode: number, error: string, message: string) => {
@@ -94,24 +93,17 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
   
   // Helper function to send success response
   const sendSuccessResponse = (data: { text: string; sources?: any[] }) => {
-    console.log('Sending success response with data:', { 
-      text: data.text.substring(0, 100) + (data.text.length > 100 ? '...' : ''),
-      sourcesCount: data.sources?.length || 0
-    });
-    
     res.status(200).json({
       text: data.text,
       sources: data.sources || []
     });
   };
-  console.log('Setting CORS headers');
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
-    console.log('Handling OPTIONS preflight request in chat handler');
     res.status(200).end();
     return;
   }
@@ -135,9 +127,7 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
   // Parse body if it's a string
   let requestBody: any;
   try {
-    console.log('Request body type:', typeof req.body);
     requestBody = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-    console.log('Parsed request body:', JSON.stringify(requestBody, null, 2));
   } catch (e) {
     const error = e as Error;
     console.error('Failed to parse request body:', error.message);
@@ -147,10 +137,6 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
   }
   
   const { history = [], message } = requestBody as ChatRequest;
-  console.log('Extracted from request:', { 
-    messageLength: message?.length || 0,
-    historyLength: history?.length || 0 
-  });
   
   // Validate message
   if (!message?.trim()) {
@@ -182,14 +168,12 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
         history: formatHistory(history),
       });
 
-      console.log('Sending message to Gemini API...');
       
       // Send the message and get the response
       const result = await chat.sendMessage(message);
       const response = await result.response;
       const text = response.text();
       
-      console.log('Received response from Gemini API');
 
       // Send success response
       sendSuccessResponse({ text, sources: [] });
@@ -231,7 +215,7 @@ const handler = withErrorHandling(handleChatRequest);
 
 export default async function(req: VercelRequest, res: VercelResponse) {
   // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   

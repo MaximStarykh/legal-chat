@@ -30,14 +30,11 @@ export const sendMessage = async (
     }));
 
     const apiUrl = getApiUrl();
-    console.log('Sending request to:', apiUrl);
     
-    const payload = { 
-      history: processedHistory, 
-      message: message.trim() 
+    const payload = {
+      history: processedHistory,
+      message: message.trim()
     };
-
-    console.log('Request payload:', JSON.stringify(payload, null, 2));
     
     const response = await fetch(apiUrl, {
       method: 'POST',

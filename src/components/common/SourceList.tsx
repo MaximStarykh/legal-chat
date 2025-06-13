@@ -38,7 +38,13 @@ export const SourceList: React.FC<SourceListProps> = ({ sources }: SourceListPro
               />
             </svg>
             <span className="truncate max-w-[200px]">
-              {source.title || new URL(source.uri).hostname.replace('www.', '')}
+              {source.title || (() => {
+                try {
+                  return new URL(source.uri).hostname.replace('www.', '');
+                } catch {
+                  return source.uri;
+                }
+              })()}
             </span>
           </a>
         ))}

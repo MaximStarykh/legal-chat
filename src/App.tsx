@@ -110,6 +110,8 @@ const App: FC = () => {
 
         <FocusTrap active={isSidebarOpen}>
         <aside
+          role="dialog"
+          aria-modal="true"
           className={`fixed inset-y-0 left-0 z-30 w-64 transform bg-white border-r border-gray-200 transition-transform duration-300 ease-in-out ${
             isSidebarOpen ? "translate-x-0" : "-translate-x-full"
           } md:relative md:translate-x-0 md:flex md:flex-shrink-0 md:flex-col`}
