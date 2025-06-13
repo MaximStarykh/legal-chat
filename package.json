@@ -12,7 +12,8 @@
     "vercel-dev": "vercel dev",
     "vercel": "vercel",
     "lint": "eslint . --ext .ts,.tsx",
-    "test": "vitest"
+    "test": "vitest",
+    "now-build": "npm run build"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
