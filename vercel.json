@@ -2,24 +2,24 @@
   "version": 2,
   "builds": [
     {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    },
+    {
       "src": "api/chat.ts",
       "use": "@vercel/node",
       "config": {
         "includeFiles": ["api/**/*.ts"],
         "esm": true
       }
-    },
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
     }
   ],
   "routes": [
-    { 
-      "src": "/api/chat", 
+    {
+      "src": "/api/chat",
       "dest": "/api/chat",
       "headers": {
         "Access-Control-Allow-Origin": "*",
@@ -30,23 +30,14 @@
       }
     },
     {
-      "src": "/(.*)",
-      "dest": "/index.html",
-      "headers": {
-        "Cache-Control": "public, max-age=0, must-revalidate"
-      }
-    },
-    {
       "src": "/assets/(.*)",
       "headers": {
         "Cache-Control": "public, max-age=31536000, immutable"
       }
     },
     {
-      "src": "/(.*).(js|css|json|png|jpg|jpeg|gif|svg|ico|webp|woff|woff2|ttf|eot)$",
-      "headers": {
-        "Cache-Control": "public, max-age=31536000, immutable"
-      }
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }

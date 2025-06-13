@@ -12,7 +12,7 @@ export default defineConfig(({ mode }) => {
   // Determine the API URL based on the environment
   const apiUrl = env.VITE_API_URL || 'http://localhost:3001';
   const isProduction = mode === 'production';
-  const base = isProduction ? '/' : '/';
+  const base = '/';
 
   return {
     base: '/',
