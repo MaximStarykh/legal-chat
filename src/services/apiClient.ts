@@ -4,12 +4,11 @@ export interface ApiResponse<T> {
 }
 
 const getApiUrl = () => {
-  if (import.meta.env.PROD) {
-    // Use the full URL in production
-    return 'https://legal-chat-i5hldtcl9-zombua-7423s-projects.vercel.app/api/chat';
+  const base = import.meta.env.VITE_API_URL;
+  if (base) {
+    return `${base.replace(/\/$/, '')}/api/chat`;
   }
-  const base = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-  return `${base}/api/chat`;
+  return '/api/chat';
 };
 
 export const apiClient = {
