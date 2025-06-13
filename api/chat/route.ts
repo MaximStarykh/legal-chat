@@ -19,8 +19,20 @@ if (!apiKey?.trim()) {
   }
 }
 
-// Initialize the Gemini AI client
-const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
+// Initialize the Gemini AI client with better error handling
+let genAI;
+try {
+  if (!apiKey) {
+    console.error('GEMINI_API_KEY is not set in environment variables');
+  } else {
+    console.log('Initializing Gemini AI client with API key');
+    genAI = new GoogleGenerativeAI(apiKey);
+    console.log('Gemini AI client initialized successfully');
+  }
+} catch (error) {
+  console.error('Failed to initialize Gemini AI client:', error);
+  genAI = null;
+}
 
 // Safety settings for content generation
 const safetySettings = [
@@ -124,25 +136,57 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
     sendErrorResponse(405, 'Method Not Allowed', 'Only POST method is allowed');
     return;
   }
+  
+  // Log request details for debugging
+  console.log('Request details:', {
+    method: req.method,
+    url: req.url,
+    headers: req.headers,
+    body: req.body ? JSON.stringify(req.body).substring(0, 500) + '...' : 'empty'
+  });
 
-  // Validate request body
+  // Validate request body with better error handling
   if (!req.body) {
-    console.error('No request body provided');
-    sendErrorResponse(400, 'Bad Request', 'Request body is required');
+    const errorMsg = 'No request body provided';
+    console.error(errorMsg, { headers: req.headers });
+    sendErrorResponse(400, 'Bad Request', errorMsg);
     return;
   }
   
-  // Parse body if it's a string
+  // Parse body if it's a string with better error handling
   let requestBody: any;
   try {
     console.log('Request body type:', typeof req.body);
-    requestBody = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-    console.log('Parsed request body:', JSON.stringify(requestBody, null, 2));
+    
+    // If body is a string, parse it as JSON
+    if (typeof req.body === 'string') {
+      try {
+        requestBody = JSON.parse(req.body);
+      } catch (parseError) {
+        console.error('Failed to parse JSON body:', parseError);
+        sendErrorResponse(400, 'Bad Request', 'Invalid JSON in request body');
+        return;
+      }
+    } else if (typeof req.body === 'object' && req.body !== null) {
+      // Body is already an object (parsed by body parser middleware)
+      requestBody = req.body;
+    } else {
+      console.error('Unexpected request body type:', typeof req.body);
+      sendErrorResponse(400, 'Bad Request', 'Invalid request body format');
+      return;
+    }
+    
+    console.log('Parsed request body:', JSON.stringify({
+      ...requestBody,
+      message: requestBody?.message?.substring(0, 100) + (requestBody?.message?.length > 100 ? '...' : ''),
+      historyLength: requestBody?.history?.length || 0
+    }, null, 2));
+    
   } catch (e) {
     const error = e as Error;
-    console.error('Failed to parse request body:', error.message);
-    console.error('Request body that failed to parse:', req.body);
-    sendErrorResponse(400, 'Bad Request', 'Invalid JSON in request body');
+    console.error('Failed to process request body:', error);
+    console.error('Request body that caused error:', req.body);
+    sendErrorResponse(400, 'Bad Request', 'Failed to process request body');
     return;
   }
   
@@ -152,18 +196,24 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
     historyLength: history?.length || 0 
   });
   
-  // Validate message
-  if (!message?.trim()) {
-    console.error('Empty or invalid message received');
-    sendErrorResponse(400, 'Bad Request', 'Message is required');
+  // Validate message with better error handling
+  if (typeof message !== 'string' || !message.trim()) {
+    const errorMsg = `Invalid message format. Expected non-empty string, got: ${typeof message}`;
+    console.error(errorMsg, { message });
+    sendErrorResponse(400, 'Bad Request', 'A non-empty message is required');
     return;
   }
 
   try {
     if (!genAI) {
-      const errorMsg = 'Gemini API client is not properly initialized';
-      console.error(errorMsg);
-      sendErrorResponse(500, 'Server Error', errorMsg);
+      const errorMsg = 'Gemini API client is not properly initialized. Please check your API key and configuration.';
+      console.error(errorMsg, { 
+        hasApiKey: !!apiKey,
+        apiKeyPrefix: apiKey ? `${apiKey.substring(0, 3)}...` : 'none',
+        nodeEnv: process.env.NODE_ENV,
+        model: process.env.GEMINI_MODEL_NAME
+      });
+      sendErrorResponse(500, 'Server Configuration Error', errorMsg);
       return;
     }
     
@@ -171,8 +221,12 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
       const modelName = process.env.GEMINI_MODEL_NAME || 'gemini-1.5-flash';
       console.log('Using model:', modelName);
       
+      if (!modelName) {
+        throw new Error('GEMINI_MODEL_NAME environment variable is not set');
+      }
+      
       try {
-        console.log('Initializing model with config:', {
+        const modelConfig = {
           model: modelName,
           generationConfig: { 
             temperature: 0.9,
@@ -182,7 +236,9 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
             category: s.category,
             threshold: s.threshold
           }))
-        });
+        };
+        
+        console.log('Initializing model with config:', JSON.stringify(modelConfig, null, 2));
 
         const model = genAI.getGenerativeModel({ 
           model: modelName,
@@ -200,23 +256,41 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
           history: formatHistory(history),
         });
 
-        console.log('Sending message to Gemini API...', {
-          messageLength: message.length,
-          historyLength: history.length
-        });
-        
-        // Send the message and get the response
-        const result = await chat.sendMessage(message);
-        
-        console.log('Received response from Gemini API, processing...');
-        const response = await result.response;
-        const text = response.text();
-        
-        console.log('Successfully processed response from Gemini API');
-
-        // Send success response
-        sendSuccessResponse({ text, sources: [] });
-        return;
+        try {
+          console.log('Sending message to Gemini API...', {
+            messageLength: message.length,
+            historyLength: history.length,
+            historyPreview: history.slice(0, 2).map(h => ({
+              role: h.role,
+              text: typeof h.parts[0] === 'string' ? h.parts[0].substring(0, 50) + '...' : h.parts[0].text.substring(0, 50) + '...'
+            }))
+          });
+          
+          // Send the message and get the response
+          const result = await chat.sendMessage(message);
+          
+          console.log('Received response from Gemini API, processing...');
+          const response = await result.response;
+          const text = response.text();
+          
+          console.log('Successfully processed response from Gemini API');
+          
+          // Log a small part of the response for debugging
+          console.log('Response preview:', text.substring(0, 100) + (text.length > 100 ? '...' : ''));
+  
+          // Send success response
+          sendSuccessResponse({ text, sources: [] });
+          return;
+        } catch (sendError) {
+          console.error('Error sending message to Gemini API:', {
+            error: sendError,
+            message: sendError.message,
+            stack: sendError.stack,
+            messageLength: message.length,
+            historyLength: history.length
+          });
+          throw sendError;
+        }
       } catch (modelError: any) {
         console.error('Model initialization or execution error:', {
           error: modelError,
@@ -308,21 +382,46 @@ export default async function(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   
+  // Log incoming request
+  console.log('Incoming request:', {
+    method: req.method,
+    url: req.url,
+    headers: req.headers,
+    body: req.body ? JSON.stringify(req.body).substring(0, 500) + '...' : 'empty'
+  });
+  
   // Handle preflight
   if (req.method === 'OPTIONS') {
+    console.log('Handling OPTIONS preflight request');
     res.status(200).end();
     return;
   }
 
   // Handle the request
   try {
+    console.log('Processing request...');
     await handler(req, res);
+    console.log('Request processed successfully');
   } catch (error) {
-    console.error('Unhandled error in API route:', error);
-    res.status(500).json({ 
-      error: 'Internal Server Error',
-      message: 'An unexpected error occurred'
+    console.error('Unhandled error in API route:', {
+      error: error.message,
+      stack: error.stack,
+      method: req.method,
+      url: req.url,
+      body: req.body ? JSON.stringify(req.body).substring(0, 500) + '...' : 'empty'
     });
+    
+    // Ensure we haven't already sent a response
+    if (!res.headersSent) {
+      res.status(500).json({ 
+        error: 'Internal Server Error',
+        message: 'An unexpected error occurred',
+        // Only include error details in development
+        ...(process.env.NODE_ENV !== 'production' ? { details: error.message } : {})
+      });
+    } else {
+      console.error('Headers already sent, cannot send error response');
+    }
   }
 };
 
