@@ -21,20 +21,27 @@ export default defineConfig(({ mode }) => {
     define: {
       'process.env': {
         NODE_ENV: JSON.stringify(mode),
-        VITE_API_URL: JSON.stringify(env.VITE_API_URL || (isProduction ? 'https://legal-chat-i5hldtcl9-zombua-7423s-projects.vercel.app/api' : 'http://localhost:3000/api'))
-      }
+        VITE_API_URL: JSON.stringify(
+          env.VITE_API_URL ||
+            (isProduction
+              ? 'https://legal-chat-i5hldtcl9-zombua-7423s-projects.vercel.app/api'
+              : 'http://localhost:3001')
+        ),
+      },
     },
     server: {
       port: 3000,
       open: true,
-      proxy: !isProduction ? {
-        '/api': {
-          target: 'http://localhost:3000',
-          changeOrigin: true,
-          secure: false,
-          rewrite: (path) => path.replace(/^\/api/, '')
-        }
-      } : undefined,
+      proxy: !isProduction
+        ? {
+            '/api': {
+              target: 'http://localhost:3001',
+              changeOrigin: true,
+              secure: false,
+              rewrite: (path) => path.replace(/^\/api/, ''),
+            },
+          }
+        : undefined,
     },
     build: {
       outDir: 'dist',
@@ -60,7 +67,13 @@ export default defineConfig(({ mode }) => {
     },
     // Optimize dependencies
     optimizeDeps: {
-      include: ['react', 'react-dom', 'react-router-dom', '@google/generative-ai', 'axios'],
+      include: [
+        'react',
+        'react-dom',
+        'react-router-dom',
+        '@google/generative-ai',
+        'axios',
+      ],
       exclude: ['@google/generative-ai'],
       esbuildOptions: {
         // Enable esbuild's tree shaking
