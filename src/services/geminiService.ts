@@ -1,8 +1,13 @@
 import type { GroundingSource, Message } from "../types";
 
-// Get the API URL from environment variables with fallback
+// Get the API URL based on the environment
 const getApiUrl = (): string => {
-  // Use VITE_API_URL if it's set in .env file, otherwise use the default
+  // In production, use relative URL (handled by Vercel rewrites)
+  if (import.meta.env.PROD) {
+    return '/api/chat';
+  }
+  
+  // In development, use the full URL from environment variable or default
   const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
   return `${baseUrl}/api/chat`;
 };
