@@ -227,7 +227,22 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
 };
 
 // Export the handler with error handling
-export default withErrorHandling(handleChatRequest);
+const handler = withErrorHandling(handleChatRequest);
+
+export default async function(req: VercelRequest, res: VercelResponse) {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  // Handle preflight
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
+  return handler(req, res);
+};
 
 // Export types for client-side use
 export type { ChatMessage, ChatRequest, ChatResponse };
