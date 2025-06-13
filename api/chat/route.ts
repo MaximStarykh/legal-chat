@@ -171,36 +171,105 @@ const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promi
       const modelName = process.env.GEMINI_MODEL_NAME || 'gemini-1.5-flash';
       console.log('Using model:', modelName);
       
-      const model = genAI.getGenerativeModel({ 
-        model: modelName,
-        generationConfig: { 
-          temperature: 0.9,
-          maxOutputTokens: 1000,
-        }, 
-        safetySettings 
-      });
-      
-      // Convert history to the format expected by the API
-      const chat = model.startChat({
-        history: formatHistory(history),
-      });
+      try {
+        console.log('Initializing model with config:', {
+          model: modelName,
+          generationConfig: { 
+            temperature: 0.9,
+            maxOutputTokens: 1000,
+          },
+          safetySettings: safetySettings.map(s => ({
+            category: s.category,
+            threshold: s.threshold
+          }))
+        });
 
-      console.log('Sending message to Gemini API...');
-      
-      // Send the message and get the response
-      const result = await chat.sendMessage(message);
-      const response = await result.response;
-      const text = response.text();
-      
-      console.log('Received response from Gemini API');
+        const model = genAI.getGenerativeModel({ 
+          model: modelName,
+          generationConfig: { 
+            temperature: 0.9,
+            maxOutputTokens: 1000,
+          }, 
+          safetySettings 
+        });
+        
+        console.log('Model initialized, starting chat...');
+        
+        // Convert history to the format expected by the API
+        const chat = model.startChat({
+          history: formatHistory(history),
+        });
 
-      // Send success response
-      sendSuccessResponse({ text, sources: [] });
-      return;
+        console.log('Sending message to Gemini API...', {
+          messageLength: message.length,
+          historyLength: history.length
+        });
+        
+        // Send the message and get the response
+        const result = await chat.sendMessage(message);
+        
+        console.log('Received response from Gemini API, processing...');
+        const response = await result.response;
+        const text = response.text();
+        
+        console.log('Successfully processed response from Gemini API');
+
+        // Send success response
+        sendSuccessResponse({ text, sources: [] });
+        return;
+      } catch (modelError: any) {
+        console.error('Model initialization or execution error:', {
+          error: modelError,
+          errorMessage: modelError.message,
+          errorStack: modelError.stack,
+          modelName,
+          hasApiKey: !!apiKey,
+          apiKeyPrefix: apiKey ? `${apiKey.substring(0, 5)}...${apiKey.substring(apiKey.length - 3)}` : 'none'
+        });
+        
+        // Check for specific model-related errors
+        if (modelError.message?.includes('model')) {
+          throw new Error(`Invalid model '${modelName}'. Please check your GEMINI_MODEL_NAME environment variable.`);
+        }
+        
+        throw modelError; // Re-throw to be caught by the outer catch
+      }
     } catch (apiError: any) {
-      console.error('Gemini API Error:', apiError);
-      const statusCode = apiError?.response?.status || 500;
-      const errorMessage = apiError?.message || 'Failed to process chat request with Gemini API';
+      console.error('Gemini API Error:', {
+        error: apiError,
+        errorMessage: apiError?.message,
+        errorStack: apiError?.stack,
+        status: apiError?.response?.status,
+        statusText: apiError?.response?.statusText,
+        headers: apiError?.response?.headers,
+        responseData: apiError?.response?.data,
+        requestConfig: {
+          url: apiError?.config?.url,
+          method: apiError?.config?.method,
+          headers: apiError?.config?.headers ? Object.keys(apiError.config.headers) : undefined,
+          data: apiError?.config?.data ? JSON.parse(apiError.config.data) : undefined,
+        },
+        model: process.env.GEMINI_MODEL_NAME,
+        apiKeyPresent: !!process.env.GEMINI_API_KEY,
+        nodeEnv: process.env.NODE_ENV
+      });
+      
+      let statusCode = apiError?.response?.status || 500;
+      let errorMessage = apiError?.message || 'Failed to process chat request with Gemini API';
+      
+      // Handle specific error cases
+      if (apiError?.response?.data?.error) {
+        errorMessage = apiError.response.data.error.message || errorMessage;
+      } else if (apiError.code === 'ENOTFOUND') {
+        errorMessage = 'Failed to connect to Gemini API. Please check your internet connection.';
+        statusCode = 503; // Service Unavailable
+      } else if (apiError.code === 'ECONNABORTED') {
+        errorMessage = 'Connection to Gemini API timed out. Please try again.';
+        statusCode = 504; // Gateway Timeout
+      } else if (apiError.message?.includes('model')) {
+        errorMessage = `Model '${process.env.GEMINI_MODEL_NAME}' might not be accessible. Please verify the model name and your API key permissions.`;
+        statusCode = 400; // Bad Request
+      }
       
       sendErrorResponse(
         statusCode, 
