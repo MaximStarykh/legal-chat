@@ -16,6 +16,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     base: '/',
+    publicDir: 'public',
     plugins: [
       react(),
     ],
@@ -89,20 +90,7 @@ export default defineConfig(({ mode }) => {
           },
           chunkFileNames: 'assets/js/[name]-[hash].js',
           entryFileNames: 'assets/js/[name]-[hash].js',
-          assetFileNames: (assetInfo) => {
-            const info = assetInfo.name?.split('.');
-            const ext = info?.[info.length - 1] || '';
-            if (['png', 'jpe?g', 'gif', 'svg', 'webp', 'avif'].includes(ext)) {
-              return `assets/images/[name]-[hash][extname]`;
-            }
-            if (ext === 'css') {
-              return 'assets/css/[name]-[hash][extname]';
-            }
-            if (['woff', 'woff2', 'eot', 'ttf', 'otf'].includes(ext)) {
-              return 'assets/fonts/[name]-[hash][extname]';
-            }
-            return 'assets/[name]-[hash][extname]';
-          },
+          assetFileNames: 'assets/[name]-[hash][extname]',
         },
       },
       commonjsOptions: {
