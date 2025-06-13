@@ -1,9 +1,8 @@
-import React from "react";
-import { ChatMessage, Sender } from "../../types";
-import { SourceList } from "./SourceList";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeSanitize from "rehype-sanitize";
+import React from 'react';
+import { Message } from '@/types';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeSanitize from 'rehype-sanitize';
 
 const UserIcon: React.FC = () => (
   <svg
@@ -31,21 +30,17 @@ const AIIcon: React.FC = () => (
   </svg>
 );
 
-export const MessageBubble: React.FC<{ message: ChatMessage }> = ({
-  message,
-}) => {
-  const isUser = message.sender === Sender.USER;
+export const MessageBubble: React.FC<{ message: Message }> = ({ message }) => {
+  const isUser = message.role === 'user';
 
   return (
-    <div
-      className={`group w-full ${message.sender === Sender.USER ? "bg-white" : "bg-gray-50"}`}
-    >
+    <div className={`group w-full ${isUser ? 'bg-white' : 'bg-gray-50'}`}>
       <div className="mx-auto max-w-3xl px-4 py-3 sm:py-4">
-        <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
+        <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
           <div
-            className={`flex items-start max-w-full ${isUser ? "flex-row-reverse ml-auto" : "flex-row"}`}
+            className={`flex items-start max-w-full ${isUser ? 'flex-row-reverse ml-auto' : 'flex-row'}`}
             style={{
-              maxWidth: "calc(100% - 40px)",
+              maxWidth: 'calc(100% - 40px)',
             }}
           >
             <div className="flex-shrink-0">
@@ -62,9 +57,7 @@ export const MessageBubble: React.FC<{ message: ChatMessage }> = ({
 
             <div
               className={`mx-3 ${
-                isUser
-                  ? "bg-blue-600 text-white"
-                  : "bg-white border border-gray-200 text-gray-800"
+                isUser ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200 text-gray-800'
               } rounded-2xl px-4 py-3 shadow-sm max-w-full`}
             >
               <div className="prose prose-sm max-w-none">
@@ -79,9 +72,7 @@ export const MessageBubble: React.FC<{ message: ChatMessage }> = ({
                         return (
                           <code
                             className={`px-1 py-0.5 rounded text-sm font-mono ${
-                              isUser
-                                ? "bg-blue-500/30 text-blue-100"
-                                : "bg-gray-100 text-red-600"
+                              isUser ? 'bg-blue-500/30 text-blue-100' : 'bg-gray-100 text-red-600'
                             }`}
                             {...props}
                           >
@@ -92,11 +83,11 @@ export const MessageBubble: React.FC<{ message: ChatMessage }> = ({
 
                       return (
                         <div
-                          className={`rounded-lg p-3 my-2 overflow-x-auto ${isUser ? "bg-blue-500/20" : "bg-gray-800"}`}
+                          className={`rounded-lg p-3 my-2 overflow-x-auto ${isUser ? 'bg-blue-500/20' : 'bg-gray-800'}`}
                         >
                           <pre className="text-sm">
                             <code
-                              className={`language-text ${isUser ? "text-blue-100" : "text-gray-100"}`}
+                              className={`language-text ${isUser ? 'text-blue-100' : 'text-gray-100'}`}
                               {...props}
                             >
                               {children}
@@ -110,51 +101,49 @@ export const MessageBubble: React.FC<{ message: ChatMessage }> = ({
                         {...props}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={`${isUser ? "text-blue-100 hover:text-white" : "text-blue-600 hover:text-blue-800"} underline`}
+                        className={`${isUser ? 'text-blue-100 hover:text-white' : 'text-blue-600 hover:text-blue-800'} underline`}
                       />
                     ),
                     ul: ({ node, ...props }) => (
                       <ul
-                        className={`list-disc pl-5 space-y-1 my-2 ${isUser ? "marker:text-blue-200" : "marker:text-gray-500"}`}
+                        className={`list-disc pl-5 space-y-1 my-2 ${isUser ? 'marker:text-blue-200' : 'marker:text-gray-500'}`}
                         {...props}
                       />
                     ),
                     ol: ({ node, ...props }) => (
                       <ol
-                        className={`list-decimal pl-5 space-y-1 my-2 ${isUser ? "marker:text-blue-200" : "marker:text-gray-500"}`}
+                        className={`list-decimal pl-5 space-y-1 my-2 ${isUser ? 'marker:text-blue-200' : 'marker:text-gray-500'}`}
                         {...props}
                       />
                     ),
                     p: ({ node, ...props }) => (
                       <p
-                        className={`my-2 leading-relaxed ${isUser ? "text-white" : "text-gray-800"}`}
+                        className={`my-2 leading-relaxed ${isUser ? 'text-white' : 'text-gray-800'}`}
                         {...props}
                       />
                     ),
                     h1: ({ node, ...props }) => (
                       <h1
-                        className={`text-xl font-bold my-3 ${isUser ? "text-white" : "text-gray-900"}`}
+                        className={`text-xl font-bold my-3 ${isUser ? 'text-white' : 'text-gray-900'}`}
                         {...props}
                       />
                     ),
                     h2: ({ node, ...props }) => (
                       <h2
-                        className={`text-lg font-semibold my-2.5 ${isUser ? "text-white" : "text-gray-900"}`}
+                        className={`text-lg font-semibold my-2.5 ${isUser ? 'text-white' : 'text-gray-900'}`}
                         {...props}
                       />
                     ),
                     h3: ({ node, ...props }) => (
                       <h3
-                        className={`text-base font-medium my-2 ${isUser ? "text-white" : "text-gray-900"}`}
+                        className={`text-base font-medium my-2 ${isUser ? 'text-white' : 'text-gray-900'}`}
                         {...props}
                       />
                     ),
                     blockquote: ({ node, ...props }) => (
                       <blockquote
                         className={`border-l-4 pl-4 my-3 italic ${
-                          isUser
-                            ? "border-blue-400 text-blue-100"
-                            : "border-gray-300 text-gray-600"
+                          isUser ? 'border-blue-400 text-blue-100' : 'border-gray-300 text-gray-600'
                         }`}
                         {...props}
                       />
@@ -162,7 +151,7 @@ export const MessageBubble: React.FC<{ message: ChatMessage }> = ({
                     table: ({ node, ...props }) => (
                       <div className="overflow-x-auto">
                         <table
-                          className={`min-w-full border-collapse my-3 ${isUser ? "text-white" : "text-gray-800"}`}
+                          className={`min-w-full border-collapse my-3 ${isUser ? 'text-white' : 'text-gray-800'}`}
                           {...props}
                         />
                       </div>
@@ -170,9 +159,7 @@ export const MessageBubble: React.FC<{ message: ChatMessage }> = ({
                     th: ({ node, ...props }) => (
                       <th
                         className={`px-4 py-2 text-left border ${
-                          isUser
-                            ? "border-blue-400 bg-blue-500/30"
-                            : "border-gray-300 bg-gray-100"
+                          isUser ? 'border-blue-400 bg-blue-500/30' : 'border-gray-300 bg-gray-100'
                         }`}
                         {...props}
                       />
@@ -180,29 +167,39 @@ export const MessageBubble: React.FC<{ message: ChatMessage }> = ({
                     td: ({ node, ...props }) => (
                       <td
                         className={`px-4 py-2 border ${
-                          isUser ? "border-blue-400" : "border-gray-200"
+                          isUser ? 'border-blue-400' : 'border-gray-200'
                         }`}
                         {...props}
                       />
                     ),
                   }}
                 >
-                  {message.text}
+                  {message.parts.map((part) => part.text).join('')}
                 </ReactMarkdown>
               </div>
 
               {!isUser && message.sources && message.sources.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-gray-200">
-                  <SourceList sources={message.sources} />
+                <div className="mt-4 pt-3 border-t border-gray-200">
+                  <h4 className="text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">
+                    Sources
+                  </h4>
+                  <ol className="list-decimal list-inside space-y-1">
+                    {message.sources.map((source, index) => (
+                      <li key={index} className="text-sm truncate">
+                        <a
+                          href={source.uri}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 hover:underline"
+                          title={source.title}
+                        >
+                          {source.title}
+                        </a>
+                      </li>
+                    ))}
+                  </ol>
                 </div>
               )}
-
-              <div className="mt-1 text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                {message.timestamp.toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </div>
             </div>
           </div>
         </div>
