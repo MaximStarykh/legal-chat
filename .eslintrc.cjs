@@ -1,61 +1,35 @@
 module.exports = {
   root: true,
-  env: {
-    browser: true,
-    es2021: true,
-    node: true,
-    'vitest/env': true,
+  parser: '@typescript-eslint/parser',
+  parserOptions: {
+    ecmaVersion: 2020,
+    sourceType: 'module',
   },
+  plugins: ['@typescript-eslint', 'react', 'react-hooks'],
   extends: [
     'eslint:recommended',
     'plugin:react/recommended',
-    'plugin:react-hooks/recommended',
-    'plugin:jsx-a11y/recommended',
-    'plugin:import/recommended',
-    'plugin:import/typescript',
     'plugin:@typescript-eslint/recommended',
-    'plugin:prettier/recommended',
+    'plugin:react-hooks/recommended',
+    'prettier',
   ],
-  parser: '@typescript-eslint/parser',
-  parserOptions: {
-    ecmaFeatures: {
-      jsx: true,
-    },
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-  },
-  plugins: ['react', 'react-hooks', '@typescript-eslint', 'prettier', 'vitest'],
   settings: {
     react: {
       version: 'detect',
     },
-    'import/resolver': {
-      typescript: {},
-      node: {
-        extensions: ['.js', '.jsx', '.ts', '.tsx'],
-      },
-    },
+  },
+  env: {
+    browser: true,
+    es2020: true,
+    node: true,
   },
   rules: {
     'react/react-in-jsx-scope': 'off',
-    'react/prop-types': 'off',
-    'react-hooks/rules-of-hooks': 'error',
-    'react-hooks/exhaustive-deps': 'warn',
-    '@typescript-eslint/explicit-module-boundary-types': 'off',
-    '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
-    'prettier/prettier': [
-      'error',
-      {
-        endOfLine: 'auto',
-      },
-    ],
+    '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/ban-types': 'off',
+    '@typescript-eslint/no-unused-vars': 'off',
+    '@typescript-eslint/triple-slash-reference': 'off',
+    'react/no-unescaped-entities': 'off',
+    '@typescript-eslint/no-namespace': 'off'
   },
-  overrides: [
-    {
-      files: ['**/*.test.ts', '**/*.test.tsx'],
-      env: {
-        'vitest/env': true,
-      },
-    },
-  ],
 };

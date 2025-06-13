@@ -12,13 +12,17 @@ This contains everything you need to run your app locally.
 2. Set up your environment:
 
    - Copy `.env.example` to `.env`
-   - Add your Gemini API key to the `GEMINI_API_KEY` variable in an environment configuration for your deployment platform. The key stays server-side and is never sent to the client.
+   - Provide `GEMINI_API_KEY` and a private `API_TOKEN` used for server requests. Never expose them client-side.
 
 3. Build the project:
    `npm run build`
 
 4. Run the app in development mode:
    `npm run dev`
+
+## Internationalisation
+
+UI strings are handled with `react-i18next`. Ukrainian translations live under `src/locales/uk/translation.json`.
 
 ## License
 
