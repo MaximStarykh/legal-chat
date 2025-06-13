@@ -1,4 +1,16 @@
+// @ts-ignore - Vercel types are not properly typed for ESM
 import { VercelRequest, VercelResponse } from '@vercel/node';
+
+// Add TypeScript support for Vercel's Node.js runtime
+declare const process: {
+  env: {
+    NODE_ENV: 'development' | 'production';
+    GEMINI_API_KEY?: string;
+    VITE_GEMINI_API_KEY?: string;
+    [key: string]: string | undefined;
+  };
+  [key: string]: any;
+};
 import {
   GoogleGenerativeAI,
   HarmCategory,
@@ -436,3 +448,6 @@ export default handler;
 
 // Export types for client-side use
 export type { ChatMessage, ChatRequest, ChatResponse };
+
+// Explicitly export the handler as a named export for better compatibility
+export { handler };

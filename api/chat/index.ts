@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import handler from '../chat';
+import { handler } from '../chat.js';
 
 export default async function (req: VercelRequest, res: VercelResponse) {
   // Set CORS headers

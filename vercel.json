@@ -2,8 +2,12 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/chat/index.ts",
-      "use": "@vercel/node"
+      "src": "api/chat.ts",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["api/**/*.ts"],
+        "esm": true
+      }
     },
     {
       "src": "package.json",
@@ -13,9 +17,9 @@
       }
     }
   ],
-  "rewrites": [
-    { "source": "/api/chat", "destination": "/api/chat" },
-    { "source": "/(.*)", "destination": "/index.html" }
+  "routes": [
+    { "src": "/api/chat", "dest": "/api/chat" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ],
   "headers": [
     {
