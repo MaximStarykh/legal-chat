@@ -1,5 +1,14 @@
 import type { GroundingSource, Message } from "../types";
 
+// Get the API URL from environment variables with fallback
+const getApiUrl = (): string => {
+  // In production, use relative URL (handled by Vercel rewrites)
+  if (import.meta.env.PROD) return '/api/chat';
+  
+  // In development, use the VITE_API_URL or default to localhost:3000
+  return import.meta.env.VITE_API_URL || 'http://localhost:3000/api/chat';
+};
+
 export const sendMessage = async (
   history: Message[],
   message: string
@@ -8,40 +17,50 @@ export const sendMessage = async (
     throw new Error("Message cannot be empty.");
   }
 
-  // Pre-process the history to send only the required fields.
-  const processedHistory = history.map(({ role, parts }) => ({ role, parts }));
-
   try {
-    // In production, the API is at the same origin, but in development we need to use the full URL
-    const apiUrl = import.meta.env.DEV 
-      ? 'http://localhost:3000/api/chat' 
-      : '/api/chat';
-      
+    // Pre-process the history to send only the required fields
+    const processedHistory = history.map(({ role, parts }) => ({ 
+      role, 
+      parts: parts.map(p => ({
+        text: typeof p === 'string' ? p : p.text
+      }))
+    }));
+
+    const apiUrl = getApiUrl();
+    console.log('Sending request to:', apiUrl);
+    
     const response = await fetch(apiUrl, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
-      body: JSON.stringify({ history: processedHistory, message }),
+      body: JSON.stringify({ 
+        history: processedHistory, 
+        message: message.trim() 
+      }),
     });
 
+    const data = await response.json().catch(() => ({
+      error: 'Invalid JSON response from server',
+    }));
+
     if (!response.ok) {
-      let errorText = `API request failed with status ${response.status}`;
-      try {
-        const errorBody = await response.json();
-        errorText = errorBody.error || errorText;
-      } catch (e) {
-        // The response was not valid JSON, use the status text.
-        errorText = response.statusText;
-      }
-      throw new Error(errorText);
+      const errorMessage = data?.error || 
+                         data?.message || 
+                         `Request failed with status ${response.status}`;
+      throw new Error(errorMessage);
     }
 
-    return await response.json();
+    return {
+      text: data.text || '',
+      sources: Array.isArray(data.sources) ? data.sources : []
+    };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-    console.error("Failed to send message:", errorMessage);
-    throw new Error(`Failed to get a response from the server: ${errorMessage}`);
+    console.error('Error in sendMessage:', error);
+    throw error instanceof Error 
+      ? error 
+      : new Error('An unknown error occurred while processing your request');
   }
 };
 

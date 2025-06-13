@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import "tailwindcss/tailwind.css";
 
 /* Animation for message appearance */
 @keyframes messageAppear {

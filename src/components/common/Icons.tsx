@@ -11,30 +11,35 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-type IconProps = {
+interface IconProps {
   className?: string;
   size?: number;
   strokeWidth?: number;
 };
 
-const IconWrapper: React.FC<{
+interface IconWrapperProps extends React.HTMLAttributes<HTMLSpanElement> {
   icon: React.ReactNode;
-  className?: string;
   size?: number;
   strokeWidth?: number;
-}> = ({ icon, className = "", size = 20, strokeWidth = 2 }) => {
+}
+
+const IconWrapper: React.FC<IconWrapperProps> = ({ 
+  icon, 
+  className = "", 
+  size = 20, 
+  strokeWidth = 2,
+  ...props 
+}) => {
   return (
     <span
       className={`inline-flex items-center justify-center ${className}`}
-      style={
-        {
-          width: `${size}px`,
-          height: `${size}px`,
-          "--icon-stroke-width": strokeWidth,
-        } as React.CSSProperties
-      }
+      style={{
+        width: `${size}px`,
+        height: `${size}px`,
+        "--icon-stroke-width": strokeWidth,
+      } as React.CSSProperties}
       aria-hidden="true"
-      focusable="false"
+      {...props}
     >
       {icon}
     </span>

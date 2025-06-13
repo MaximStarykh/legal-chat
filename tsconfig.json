@@ -1,44 +1,55 @@
 {
+  "extends": "./tsconfig.vercel.json",
   "compilerOptions": {
-    "target": "ES2022",
-    "experimentalDecorators": true,
-    "useDefineForClassFields": false,
-    "module": "ESNext",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "moduleResolution": "node",
-    "isolatedModules": true,
-    "noEmit": true,
+    "target": "es2020",
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
-    "resolveJsonModule": true,
     "jsx": "react-jsx",
     "jsxImportSource": "react",
+    "skipLibCheck": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
     "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true,
-    "forceConsistentCasingInFileNames": true,
-    "types": ["vite/client", "node"],
-    "typeRoots": ["./node_modules/@types", "./src/types"],
-    "skipLibCheck": true,
-
+    "noImplicitReturns": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictPropertyInitialization": true,
+    "strictBindCallApply": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+    "types": ["vite/client", "node"],
+    "typeRoots": ["./node_modules/@types"],
+    "allowSyntheticDefaultImports": true
   },
   "include": [
-    "src", 
-    "src/**/*.ts", 
+    "src",
+    "src/**/*.ts",
     "src/**/*.tsx",
-    "src/**/*.d.ts"
+    "src/**/*.js",
+    "src/**/*.jsx",
+    "**/*.d.ts",
+    "**/*.cjs",
+    "**/*.mjs"
   ],
   "exclude": [
-    "node_modules", 
+    "node_modules",
     "dist",
+    "**/*.test.ts",
     "**/*.spec.ts",
-    "**/*.test.ts"
+    "**/*.test.tsx",
+    "**/*.spec.tsx"
   ]
 }
