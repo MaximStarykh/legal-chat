@@ -18,40 +18,27 @@
     }
   ],
   "routes": [
-    { "src": "/api/chat", "dest": "/api/chat" },
-    { "src": "/(.*)", "dest": "/index.html" }
-  ],
-  "headers": [
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "*" },
-        { "key": "Access-Control-Allow-Methods", "value": "GET,OPTIONS,POST" },
-        { "key": "Access-Control-Allow-Headers", "value": "X-Requested-With, Content-Type, Accept, Authorization" },
-        { "key": "Access-Control-Allow-Credentials", "value": "true" },
-        { "key": "Cache-Control", "value": "no-cache" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" }
-      ]
+    { 
+      "src": "/api/chat", 
+      "dest": "/api/chat",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET,OPTIONS,POST",
+        "Access-Control-Allow-Headers": "X-Requested-With, Content-Type, Accept, Authorization",
+        "Access-Control-Allow-Credentials": "true",
+        "Cache-Control": "no-cache",
+        "Permissions-Policy": "camera=(), microphone=(), geolocation=()"
+      }
     },
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "X-XSS-Protection", "value": "1; mode=block" },
-        {
-          "key": "Referrer-Policy",
-          "value": "strict-origin-when-cross-origin"
-        },
-        {
-          "key": "Permissions-Policy",
-          "value": "camera=(), microphone=(), geolocation=()"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=0, must-revalidate"
-        }
-      ]
+    { 
+      "src": "/(.*)", 
+      "dest": "/index.html",
+      "headers": {
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "X-XSS-Protection": "1; mode=block",
+        "Referrer-Policy": "strict-origin-when-cross-origin"
+      }
     }
   ],
   "env": {
