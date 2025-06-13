@@ -8,7 +8,7 @@ import { fileURLToPath, URL } from 'node:url';
 export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current directory.
   const env = loadEnv(mode, process.cwd(), '');
-  
+
   // Determine the API URL based on the environment
   const apiUrl = env.VITE_API_URL || 'http://localhost:3001';
   const isProduction = mode === 'production';
@@ -17,59 +17,59 @@ export default defineConfig(({ mode }) => {
   return {
     base: '/',
     publicDir: 'public',
-    plugins: [
-      react(),
-    ],
+    plugins: [react()],
     css: {
       postcss: {
-        plugins: [
-          tailwindcss(),
-          autoprefixer(),
-        ],
+        plugins: [tailwindcss(), autoprefixer()],
       },
       devSourcemap: !isProduction,
       modules: {
         localsConvention: 'camelCaseOnly',
       },
     },
-    
+
     // Environment variables that should be exposed to the client
     define: {
       'process.env.NODE_ENV': JSON.stringify(mode),
       'process.env.VITE_API_URL': JSON.stringify(apiUrl),
     },
-    
+
     // Server configuration
     server: {
       port: 3000,
       strictPort: true,
       open: !process.env.CI,
-      proxy: !isProduction ? {
-        // Proxy API requests in development to avoid CORS issues
-        '/api': {
-          target: 'http://localhost:3001',
-          changeOrigin: true,
-          secure: false,
-          ws: true,
-          // Don't rewrite the /api prefix
-          rewrite: (path) => path,
-          // Configure CORS headers for development
-          configure: (proxy, _options) => {
-            proxy.on('error', (err, _req, _res) => {
-              console.error('Proxy error:', err);
-            });
-            proxy.on('proxyReq', (proxyReq, req, _res) => {
-              console.log('Proxying request to backend:', req.method, req.url);
-              console.log('Request headers:', JSON.stringify(req.headers, null, 2));
-            });
-            proxy.on('proxyRes', (proxyRes, req, _res) => {
-              console.log('Response from backend:', proxyRes.statusCode, req.url);
-            });
+      proxy: !isProduction
+        ? {
+            // Proxy API requests in development to avoid CORS issues
+            '/api': {
+              target: 'http://localhost:3001',
+              changeOrigin: true,
+              secure: false,
+              ws: true,
+              // Don't rewrite the /api prefix
+              rewrite: (path) => path,
+              // Configure CORS headers for development
+              configure: (proxy, _options) => {
+                proxy.on('error', (err, _req, _res) => {
+                  if (import.meta.env.DEV) console.error('Proxy error:', err);
+                });
+                proxy.on('proxyReq', (proxyReq, req, _res) => {
+                  if (import.meta.env.DEV)
+                    console.log('Proxying request to backend:', req.method, req.url);
+                  if (import.meta.env.DEV)
+                    console.log('Request headers:', JSON.stringify(req.headers, null, 2));
+                });
+                proxy.on('proxyRes', (proxyRes, req, _res) => {
+                  if (import.meta.env.DEV)
+                    console.log('Response from backend:', proxyRes.statusCode, req.url);
+                });
+              },
+            },
           }
-        },
-      } : undefined,
+        : undefined,
     },
-    
+
     // Build configuration
     build: {
       outDir: 'dist',
@@ -97,30 +97,24 @@ export default defineConfig(({ mode }) => {
         include: /node_modules/,
       },
     },
-    
+
     // Preview configuration
     preview: {
       port: 3000,
       strictPort: true,
       open: !process.env.CI,
     },
-    
+
     // Resolve configuration
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
       },
     },
-    
+
     // Optimize dependencies
     optimizeDeps: {
-      include: [
-        'react',
-        'react-dom',
-        'react-router-dom',
-        '@google/generative-ai',
-        'axios',
-      ],
+      include: ['react', 'react-dom', 'react-router-dom', '@google/generative-ai', 'axios'],
       exclude: ['@google/generative-ai'],
       esbuildOptions: {
         // Enable esbuild's tree shaking
