@@ -4,7 +4,7 @@ module.exports = {
     browser: true,
     es2021: true,
     node: true,
-    'vitest/globals': true,
+    'vitest/env': true,
   },
   extends: [
     'eslint:recommended',
@@ -54,7 +54,7 @@ module.exports = {
     {
       files: ['**/*.test.ts', '**/*.test.tsx'],
       env: {
-        'vitest/globals': true,
+        'vitest/env': true,
       },
     },
   ],
