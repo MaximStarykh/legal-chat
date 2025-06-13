@@ -15,7 +15,7 @@ const getApiUrl = (): string => {
 export const sendMessage = async (
   history: Message[],
   message: string
-): Promise<{ text: string; sources: GroundingSource[]; modelName?: string }> => {
+): Promise<{ text: string; sources: GroundingSource[] }> => {
   if (!message?.trim()) {
     throw new Error('Message cannot be empty.');
   }
@@ -30,14 +30,14 @@ export const sendMessage = async (
     }));
 
     const apiUrl = getApiUrl();
-    console.log('Sending request to:', apiUrl);
+    if (import.meta.env.DEV) console.log('Sending request to:', apiUrl);
 
     const payload = {
       history: processedHistory,
       message: message.trim(),
     };
 
-    console.log('Request payload:', JSON.stringify(payload, null, 2));
+    if (import.meta.env.DEV) console.log('Request payload:', JSON.stringify(payload, null, 2));
 
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -54,16 +54,17 @@ export const sendMessage = async (
     try {
       data = responseText ? JSON.parse(responseText) : {};
     } catch (e) {
-      console.error('Failed to parse JSON response:', responseText);
+      if (import.meta.env.DEV) console.error('Failed to parse JSON response:', responseText);
       throw new Error('Invalid JSON response from server');
     }
 
     if (!response.ok) {
-      console.error('API Error Response:', {
-        status: response.status,
-        statusText: response.statusText,
-        data,
-      });
+      if (import.meta.env.DEV)
+        console.error('API Error Response:', {
+          status: response.status,
+          statusText: response.statusText,
+          data,
+        });
 
       // Create a more detailed error object
       const error = new Error(
@@ -77,10 +78,9 @@ export const sendMessage = async (
     return {
       text: data.text || '',
       sources: Array.isArray(data.sources) ? data.sources : [],
-      modelName: typeof data.modelName === 'string' ? data.modelName : undefined,
     };
   } catch (error) {
-    console.error('Error in sendMessage:', error);
+    if (import.meta.env.DEV) console.error('Error in sendMessage:', error);
 
     if (error instanceof Error) {
       if (error.message.includes('Failed to fetch')) {

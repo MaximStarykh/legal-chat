@@ -52,14 +52,17 @@ export default defineConfig(({ mode }) => {
               // Configure CORS headers for development
               configure: (proxy, _options) => {
                 proxy.on('error', (err, _req, _res) => {
-                  console.error('Proxy error:', err);
+                  if (import.meta.env.DEV) console.error('Proxy error:', err);
                 });
                 proxy.on('proxyReq', (proxyReq, req, _res) => {
-                  console.log('Proxying request to backend:', req.method, req.url);
-                  console.log('Request headers:', JSON.stringify(req.headers, null, 2));
+                  if (import.meta.env.DEV)
+                    console.log('Proxying request to backend:', req.method, req.url);
+                  if (import.meta.env.DEV)
+                    console.log('Request headers:', JSON.stringify(req.headers, null, 2));
                 });
                 proxy.on('proxyRes', (proxyRes, req, _res) => {
-                  console.log('Response from backend:', proxyRes.statusCode, req.url);
+                  if (import.meta.env.DEV)
+                    console.log('Response from backend:', proxyRes.statusCode, req.url);
                 });
               },
             },
@@ -117,11 +120,6 @@ export default defineConfig(({ mode }) => {
         // Enable esbuild's tree shaking
         treeShaking: true,
       },
-    },
-
-    test: {
-      globals: true,
-      environment: 'jsdom',
     },
   };
 });
