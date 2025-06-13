@@ -62,139 +62,167 @@ const formatHistory = (history: ChatMessage[]): Content[] => {
 
 // Error handling middleware
 const withErrorHandling = (handler: (req: VercelRequest, res: VercelResponse) => Promise<void>) => {
-  return async (req: VercelRequest, res: VercelResponse) => {
+  return async (req: VercelRequest, res: VercelResponse): Promise<void> => {
+    // Helper function to send error response
+    const sendErrorResponse = (statusCode: number, error: string, message: string) => {
+      res.status(statusCode).json({ error, message });
+    };
+
     try {
       await handler(req, res);
-    } catch (error) {
-      console.error('Unhandled error in API handler:', error);
+    } catch (error: any) {
+      console.error('Unhandled error:', error);
       
-      const statusCode = 500;
-      const errorMessage = 'Internal Server Error';
-      const errorDetails = error instanceof Error ? error.message : 'An unknown error occurred';
+      const statusCode = error.statusCode || 500;
+      const errorMessage = error.error || 'Internal Server Error';
+      const errorDetails = error.message || (error instanceof Error ? error.message : 'An unknown error occurred');
       
-      res.status(statusCode).json({
-        error: errorMessage,
-        message: errorDetails,
-        ...(process.env.NODE_ENV !== 'production' && {
-          stack: error instanceof Error ? error.stack : undefined
-        })
-      });
+      sendErrorResponse(statusCode, errorMessage, errorDetails);
     }
   };
 };
 
 // Main chat request handler
 const handleChatRequest = async (req: VercelRequest, res: VercelResponse): Promise<void> => {
-  // Set CORS headers
+  console.log('=== CHAT REQUEST HANDLER STARTED ===');
+  
+  // Helper function to send error response
+  const sendErrorResponse = (statusCode: number, error: string, message: string) => {
+    console.error(`Sending error response (${statusCode}):`, { error, message });
+    res.status(statusCode).json({ error, message });
+  };
+  
+  // Helper function to send success response
+  const sendSuccessResponse = (data: { text: string; sources?: any[] }) => {
+    console.log('Sending success response with data:', { 
+      text: data.text.substring(0, 100) + (data.text.length > 100 ? '...' : ''),
+      sourcesCount: data.sources?.length || 0
+    });
+    
+    res.status(200).json({
+      text: data.text,
+      sources: data.sources || []
+    });
+  };
+  console.log('Setting CORS headers');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   
-  // Handle preflight
+  // Handle preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('Handling OPTIONS preflight request in chat handler');
     res.status(200).end();
     return;
   }
-
-  // Only allow POST
+  
+  // Only allow POST requests
   if (req.method !== 'POST') {
-    res.status(405).json({
-      error: 'Method Not Allowed',
-      message: 'Only POST requests are supported',
-      allowedMethods: ['POST']
-    });
+    const errorMsg = `Method ${req.method} not allowed`;
+    console.error(errorMsg);
+    res.setHeader('Allow', 'POST');
+    sendErrorResponse(405, 'Method Not Allowed', 'Only POST method is allowed');
     return;
   }
 
   // Validate request body
   if (!req.body) {
-    res.status(400).json({
-      error: 'Bad Request',
-      message: 'Request body is required'
-    });
+    console.error('No request body provided');
+    sendErrorResponse(400, 'Bad Request', 'Request body is required');
     return;
   }
-
-  const { history = [], message } = req.body as ChatRequest;
-
+  
+  // Parse body if it's a string
+  let requestBody: any;
+  try {
+    console.log('Request body type:', typeof req.body);
+    requestBody = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    console.log('Parsed request body:', JSON.stringify(requestBody, null, 2));
+  } catch (e) {
+    const error = e as Error;
+    console.error('Failed to parse request body:', error.message);
+    console.error('Request body that failed to parse:', req.body);
+    sendErrorResponse(400, 'Bad Request', 'Invalid JSON in request body');
+    return;
+  }
+  
+  const { history = [], message } = requestBody as ChatRequest;
+  console.log('Extracted from request:', { 
+    messageLength: message?.length || 0,
+    historyLength: history?.length || 0 
+  });
+  
   // Validate message
   if (!message?.trim()) {
-    res.status(400).json({
-      error: 'Bad Request',
-      message: 'Message is required and cannot be empty'
-    });
+    console.error('Empty or invalid message received');
+    sendErrorResponse(400, 'Bad Request', 'Message is required');
     return;
   }
 
   try {
     if (!genAI) {
-      throw new Error('Gemini API client is not properly initialized');
+      const errorMsg = 'Gemini API client is not properly initialized';
+      console.error(errorMsg);
+      sendErrorResponse(500, 'Server Error', errorMsg);
+      return;
     }
-
-    console.log('Processing chat request with message:', message.substring(0, 100) + '...');
     
-    // Initialize the model
-    const model = genAI.getGenerativeModel({
-      model: process.env.GEMINI_MODEL_NAME || 'gemini-1.5-flash',
-      generationConfig: {
-        temperature: 0.9,
-        topP: 1,
-        topK: 40,
-        maxOutputTokens: 4096,
-      },
-      safetySettings,
-    });
+    try {
+      const model = genAI.getGenerativeModel({ 
+        model: process.env.GEMINI_MODEL_NAME || 'gemini-1.5-flash', 
+        generationConfig: { 
+          temperature: 0.9,
+          maxOutputTokens: 1000,
+        }, 
+        safetySettings 
+      });
+      
+      // Convert history to the format expected by the API
+      const chat = model.startChat({
+        history: formatHistory(history),
+      });
 
-    // Start chat with history
-    const chat = model.startChat({
-      history: formatHistory(history),
-      generationConfig: {
-        maxOutputTokens: 4096,
-      },
-    });
+      console.log('Sending message to Gemini API...');
+      
+      // Send the message and get the response
+      const result = await chat.sendMessage(message);
+      const response = await result.response;
+      const text = response.text();
+      
+      console.log('Received response from Gemini API');
 
-    // Send message and get response
-    const result = await chat.sendMessage(message);
-    const response = await result.response;
-    const text = response.text();
-
-    // For now, return empty sources array
-    // You can implement citation extraction based on your needs
-    const sources: Array<{url: string; title: string; text: string}> = [];
-
-    // Send success response
-    res.status(200).json({
-      text,
-      sources
-    });
-
-  } catch (error) {
-    console.error('Error processing chat request:', error);
+      // Send success response
+      sendSuccessResponse({ text, sources: [] });
+      return;
+    } catch (apiError: any) {
+      console.error('Gemini API Error:', apiError);
+      const statusCode = apiError?.response?.status || 500;
+      const errorMessage = apiError?.message || 'Failed to process chat request with Gemini API';
+      
+      sendErrorResponse(
+        statusCode, 
+        'Gemini API Error',
+        errorMessage
+      );
+      return;
+    }
+  } catch (error: any) {
+    console.error('Unexpected error in chat handler:', error);
     
-    // More specific error handling
-    let statusCode = 500;
-    let errorMessage = 'Failed to process chat request';
+    let errorMessage = 'An unexpected error occurred while processing your request';
     let errorDetails = error instanceof Error ? error.message : 'Unknown error';
+    let statusCode = 500;
     
-    // Handle specific error cases
     if (errorDetails.includes('API key')) {
       statusCode = 401;
       errorMessage = 'Invalid API key';
     } else if (errorDetails.includes('quota')) {
       statusCode = 429;
       errorMessage = 'API quota exceeded';
-    } else if (errorDetails.includes('safety')) {
-      statusCode = 400;
-      errorMessage = 'Content policy violation';
     }
     
-    res.status(statusCode).json({
-      error: errorMessage,
-      message: errorDetails,
-      ...(process.env.NODE_ENV !== 'production' && {
-        stack: error instanceof Error ? error.stack : undefined
-      })
-    });
+    sendErrorResponse(statusCode, errorMessage, errorDetails);
+    return;
   }
 };
 

@@ -2,11 +2,9 @@ import type { GroundingSource, Message } from "../types";
 
 // Get the API URL from environment variables with fallback
 const getApiUrl = (): string => {
-  // In production, use relative URL (handled by Vercel rewrites)
-  if (import.meta.env.PROD) return '/api/chat';
-  
-  // In development, use the VITE_API_URL or default to localhost:3000
-  return import.meta.env.VITE_API_URL || 'http://localhost:3000/api/chat';
+  // Use VITE_API_URL if it's set in .env file, otherwise use the default
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+  return `${baseUrl}/api/chat`;
 };
 
 export const sendMessage = async (
@@ -29,27 +27,44 @@ export const sendMessage = async (
     const apiUrl = getApiUrl();
     console.log('Sending request to:', apiUrl);
     
+    const payload = { 
+      history: processedHistory, 
+      message: message.trim() 
+    };
+
+    console.log('Request payload:', JSON.stringify(payload, null, 2));
+    
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      body: JSON.stringify({ 
-        history: processedHistory, 
-        message: message.trim() 
-      }),
+      body: JSON.stringify(payload),
     });
 
-    const data = await response.json().catch(() => ({
-      error: 'Invalid JSON response from server',
-    }));
+    const responseText = await response.text();
+    let data;
+    
+    try {
+      data = responseText ? JSON.parse(responseText) : {};
+    } catch (e) {
+      console.error('Failed to parse JSON response:', responseText);
+      throw new Error('Invalid JSON response from server');
+    }
 
     if (!response.ok) {
-      const errorMessage = data?.error || 
-                         data?.message || 
-                         `Request failed with status ${response.status}`;
-      throw new Error(errorMessage);
+      console.error('API Error Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        data
+      });
+      
+      // Create a more detailed error object
+      const error = new Error(data?.message || `Request failed with status ${response.status}`) as any;
+      error.status = response.status;
+      error.data = data;
+      throw error;
     }
 
     return {
@@ -58,9 +73,15 @@ export const sendMessage = async (
     };
   } catch (error) {
     console.error('Error in sendMessage:', error);
-    throw error instanceof Error 
-      ? error 
-      : new Error('An unknown error occurred while processing your request');
+    
+    if (error instanceof Error) {
+      if (error.message.includes('Failed to fetch')) {
+        throw new Error('Failed to connect to the server. Please check your internet connection and try again.');
+      }
+      throw error;
+    }
+    
+    throw new Error('An unknown error occurred while processing your request');
   }
 };
 
