@@ -34,13 +34,5 @@
       "src": "/(.*)", 
       "dest": "/index.html"
     }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  },
-  "public": true,
-  "cleanUrls": true,
-  "trailingSlash": false,
-  "buildCommand": "npm run vercel-build",
-  "outputDirectory": "dist"
+  ]
 }
