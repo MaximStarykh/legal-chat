@@ -10,13 +10,19 @@ Legal Chat is a simple chat interface for obtaining quick legal information usin
    ```
 2. **Configure environment variables**
    - Copy `.env.example` to `.env`.
-   - Provide a valid `GEMINI_API_KEY`. This key is used only on the server.
-   - Optionally adjust `GEMINI_MODEL_NAME` and other settings.
-3. **Development**
+   - Provide a valid `GEMINI_API_KEY`.
+   - Optional: set `VITE_API_URL=http://localhost:3001` for local API calls.
+   - Adjust `GEMINI_MODEL_NAME` if needed.
+3. **Start the API server**
+   ```sh
+   npm install -g vercel # if not installed
+   vercel dev --listen 3001
+   ```
+4. **Start the frontend** (in another terminal)
    ```sh
    npm run dev
    ```
-4. **Production build**
+5. **Production build**
    ```sh
    npm run build
    ```
