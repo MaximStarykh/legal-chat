@@ -7,3 +7,5 @@
 - Added ErrorBoundary and loading indicators (Issues #10, #13).
 - Improved accessibility and focus management (Issues #8, #9, #17).
 - Documented how to run the Vercel API locally for development.
+- Added `concurrently` to run Vercel and Vite together with `npm run dev`.
+- Documented deployment steps for hosting on Vercel.

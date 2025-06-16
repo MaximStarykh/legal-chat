@@ -13,15 +13,13 @@ Legal Chat is a simple chat interface for obtaining quick legal information usin
    - Provide a valid `GEMINI_API_KEY`.
    - Optional: set `VITE_API_URL=http://localhost:3001` for local API calls.
    - Adjust `GEMINI_MODEL_NAME` if needed.
-3. **Start the API server**
-   ```sh
-   npm install -g vercel # if not installed
-   vercel dev --listen 3001
-   ```
-4. **Start the frontend** (in another terminal)
+3. **Start development servers**
    ```sh
    npm run dev
    ```
+   This runs the Vercel serverless API on port `3001` and the Vite frontend on `http://localhost:3000`.
+4. **Visit the app**
+   Open <http://localhost:3000> in your browser.
 5. **Production build**
    ```sh
    npm run build
@@ -36,3 +34,16 @@ Legal Chat is a simple chat interface for obtaining quick legal information usin
 ## License
 
 [MIT](LICENSE)
+
+## Deploying to Vercel
+
+1. Install the Vercel CLI if you haven't already:
+   ```sh
+   npm install -g vercel
+   ```
+2. Run the deployment command and follow the prompts:
+   ```sh
+   vercel
+   ```
+   Set your `GEMINI_API_KEY` and any other variables in the Vercel dashboard.
+3. After deployment, your API and frontend will be served from the same Vercel URL.
