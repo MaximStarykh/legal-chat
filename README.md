@@ -1,29 +1,32 @@
-# Run and deploy your AI Studio app
+# Legal Chat
 
-This contains everything you need to run your app locally.
+Legal Chat is a simple chat interface for obtaining quick legal information using Google Gemini. All communication with Gemini is handled through a serverless API to keep secrets secure.
 
-## Run Locally
+## Getting Started
 
-**Prerequisites:** Node.js
+1. **Install dependencies**
+   ```sh
+   npm install
+   ```
+2. **Configure environment variables**
+   - Copy `.env.example` to `.env`.
+   - Provide a valid `GEMINI_API_KEY`. This key is used only on the server.
+   - Optionally adjust `GEMINI_MODEL_NAME` and other settings.
+3. **Development**
+   ```sh
+   npm run dev
+   ```
+4. **Production build**
+   ```sh
+   npm run build
+   ```
 
-1. Install dependencies:
-   `npm install`
+## Project Structure
 
-2. Set up your environment:
-
-   - Copy `.env.example` to `.env`
-   - Provide `GEMINI_API_KEY` and a private `API_TOKEN` used for server requests. Never expose them client-side.
-
-3. Build the project:
-   `npm run build`
-
-4. Run the app in development mode:
-   `npm run dev`
-
-## Internationalisation
-
-UI strings are handled with `react-i18next`. Ukrainian translations live under `src/locales/uk/translation.json`.
+- `src/` – React components and hooks.
+- `api/` – Serverless function for Gemini API requests.
+- `src/store/` – Zustand state stores.
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+[MIT](LICENSE)

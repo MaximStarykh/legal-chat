@@ -1,5 +1,5 @@
-import React, { useCallback, useRef, useEffect } from "react";
-import { SendIcon, LoadingSpinner } from "../common/Icons";
+import React, { useCallback, useRef, useEffect } from 'react';
+import { SendIcon, LoadingSpinner } from '../common/Icons';
 
 interface MessageInputProps {
   value: string;
@@ -16,7 +16,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   placeholder,
   onChange,
   onSubmit,
-  className = "",
+  className = '',
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -24,7 +24,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const adjustTextareaHeight = useCallback(() => {
     const textarea = textareaRef.current;
     if (textarea) {
-      textarea.style.height = "auto";
+      textarea.style.height = 'auto';
       textarea.style.height = `${Math.min(textarea.scrollHeight, 150)}px`;
     }
   }, []);
@@ -34,7 +34,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       onSubmit();
     }
@@ -50,6 +50,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       onSubmit={(e) => {
         e.preventDefault();
         onSubmit(e);
+        textareaRef.current?.focus();
       }}
       className={`relative ${className}`}
     >
@@ -82,8 +83,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             disabled={!value.trim() || isLoading}
             className={`inline-flex items-center justify-center p-2 rounded-full transition-colors duration-200 ${
               value.trim() && !isLoading
-                ? "text-white bg-blue-600 hover:bg-blue-700"
-                : "text-gray-400 bg-gray-100 cursor-not-allowed"
+                ? 'text-white bg-blue-600 hover:bg-blue-700'
+                : 'text-gray-400 bg-gray-100 cursor-not-allowed'
             }`}
             aria-label="Send message"
           >

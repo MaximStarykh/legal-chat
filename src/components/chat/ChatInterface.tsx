@@ -4,6 +4,7 @@ import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
 import { ErrorMessage } from './ErrorMessage';
 import { WelcomeScreen } from './WelcomeScreen';
+import { TypingIndicator } from './TypingIndicator';
 import { useTranslation } from 'react-i18next';
 
 interface ChatInterfaceProps {
@@ -49,7 +50,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               disclaimer={t('aiDisclaimer')}
             />
           ) : (
-            <MessageList messages={messages} />
+            <>
+              <MessageList messages={messages} />
+              {isLoading && <TypingIndicator className="mt-4" />}
+            </>
           )}
         </div>
       </div>
