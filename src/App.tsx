@@ -1,18 +1,11 @@
-import { useState, useEffect, useCallback, FC, lazy, Suspense } from "react";
-import FocusTrap from "focus-trap-react";
+import { useState, useEffect, useCallback, FC } from "react";
 import { MenuIcon, CloseIcon } from "./components/common/Icons";
-import ErrorBoundary from "./components/common/ErrorBoundary";
-import { Notification } from "@/components/common/Notification";
-import { Chat } from "@/types";
 import {
   DISCLAIMER_TEXT,
+  API_KEY_MISSING_MESSAGE,
+  API_KEY_REQUIRED,
 } from "./constants";
-
-const ChatInterface = lazy(() =>
-  import("@/components/chat/ChatInterface").then((module) => ({
-    default: module.ChatInterface,
-  }))
-);
+import { ChatInterface } from "@/components/chat";
 
 declare global {
   namespace JSX {
@@ -20,16 +13,35 @@ declare global {
   }
 }
 
+type Chat = {
+  id: string;
+  title: string;
+  unread: boolean;
+};
+
 const App: FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [activeChat, setActiveChat] = useState<string | null>(null);
-  const [chats, setChats] = useState<Chat[]>([
+  const [chats] = useState<Chat[]>([
     { id: "1", title: "Новий чат", unread: false },
     { id: "2", title: "Юридична консультація", unread: true },
     { id: "3", title: "Аналіз договору", unread: false },
   ]);
-  const [notification, setNotification] = useState<string | null>(null);
+
+  // Handle missing API key
+  const handleApiKeyMissing = useCallback((): void => {
+    // Show a more prominent error message in the UI
+    alert(`${API_KEY_MISSING_MESSAGE} ${API_KEY_REQUIRED}`);
+    console.error("API key is missing. Please provide a valid API key.");
+  }, []);
+
+  // Set API key from environment variables (in a real app, this should be handled securely on the backend)
+  useEffect(() => {
+    if (!import.meta.env.VITE_GEMINI_API_KEY) {
+      console.warn(API_KEY_MISSING_MESSAGE);
+    }
+  }, []);
 
   useEffect(() => {
     const handleResize = (): void => {
@@ -51,27 +63,8 @@ const App: FC = () => {
     }
   }, [isMobile]);
 
-  const handleNewChat = useCallback(() => {
-    const newChat: Chat = {
-      id: `chat_${Date.now()}`,
-      title: "Новий чат",
-      unread: false,
-    };
-    setChats((prevChats) => [newChat, ...prevChats]);
-    setActiveChat(newChat.id);
-    closeSidebar();
-  }, [closeSidebar]);
-
   return (
     <div className="flex flex-col h-screen bg-gray-50">
-      {notification && (
-        <div className="fixed top-4 right-4 z-50">
-          <Notification
-            message={notification}
-            onClose={() => setNotification(null)}
-          />
-        </div>
-      )}
       {/* Header */}
       <header className="sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm">
         <div className="px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -90,7 +83,10 @@ const App: FC = () => {
             <button
               type="button"
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              onClick={handleNewChat}
+              onClick={() => {
+                setActiveChat(null);
+                closeSidebar();
+              }}
             >
               Новий чат
             </button>
@@ -108,7 +104,6 @@ const App: FC = () => {
           aria-hidden="true"
         />
 
-        <FocusTrap active={isSidebarOpen}>
         <aside
           className={`fixed inset-y-0 left-0 z-30 w-64 transform bg-white border-r border-gray-200 transition-transform duration-300 ease-in-out ${
             isSidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -155,22 +150,15 @@ const App: FC = () => {
             </div>
           </nav>
         </aside>
-      </FocusTrap>
 
         {/* Main content */}
         <main className="flex-1 flex flex-col overflow-hidden bg-white">
-          <ErrorBoundary>
           <div className="flex-1 overflow-y-auto focus:outline-none">
             <div className="max-w-4xl mx-auto w-full h-full flex flex-col">
-              <Suspense
-                fallback={
-                  <div className="flex h-full items-center justify-center">
-                    <p className="text-gray-500">Loading chat...</p>
-                  </div>
-                }
-              >
-                <ChatInterface className="h-full" />
-              </Suspense>
+              <ChatInterface
+                onApiKeyMissing={handleApiKeyMissing}
+                className="h-full"
+              />
             </div>
           </div>
 
@@ -179,7 +167,6 @@ const App: FC = () => {
               {DISCLAIMER_TEXT}
             </p>
           </footer>
-          </ErrorBoundary>
         </main>
       </div>
     </div>

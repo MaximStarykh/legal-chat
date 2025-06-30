@@ -20,11 +20,15 @@ export const MessageList: React.FC<MessageListProps> = ({
   }, [messages.length]);
 
   return (
-    <div className={`space-y-6 py-4 ${className}`}>
+    <div
+      className={`space-y-6 py-4 ${className}`}
+      role="log"
+      aria-live="polite"
+    >
       {messages.map((message, index) => (
         <MessageBubble key={index} message={message} />
       ))}
-      
+
       <div ref={messagesEndRef} className="h-8" />
     </div>
   );
